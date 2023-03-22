@@ -1,4 +1,4 @@
-import { authenticateUser, logoutUser, createUserDocument, createUserInServer, logUserInServer, move_user_to_location } from "./firebase.js";
+import { authenticateUser, logoutUser, createUserDocument, createUserInServer, logUserInServer, move_user_to_location, user_watch } from "./firebase.js";
 
 document.getElementById("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -35,7 +35,7 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
             const serverSuccess = await logUserInServer(user.uid);
             if (serverSuccess) {
                 console.log("Character Log: Success");
-                const daemon_message = move_user_to_location(user.uid, "The Book");
+                const daemon_message = user_watch(user.uid);
             }
             else
             {

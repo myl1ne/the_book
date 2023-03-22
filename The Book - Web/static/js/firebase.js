@@ -135,6 +135,34 @@ export async function logUserInServer(id) {
     }
 }
 
+export async function user_watch(user_id) {
+    try {
+        const response = await fetch(`/users/${user_id}/watch`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Server response:", data);
+
+            const myEvent = new CustomEvent("book-event-content-update", {
+                detail: data,
+            });
+            document.dispatchEvent(myEvent);
+            return true;
+        } else {
+            console.error("Error moving user on server:", response.statusText);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error moving user on server:", error);
+        return false;
+    }
+}
+
 export async function move_user_to_location(user_id, location_id) {
     try {
         const response = await fetch(`/users/${user_id}/move_to/${location_id}`, {

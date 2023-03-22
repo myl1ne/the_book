@@ -34,29 +34,21 @@ def user_log(id):
     }
     return jsonify(response_data)
 
+@app.route("/users/<user_id>/watch", methods=["POST"])
+def user_watch(user_id):
+    data = app.book.get_current_location_for(user_id = user_id)
+    return jsonify(data)
+
 @app.route("/users/<user_id>/move_to/<location_id>", methods=["POST"])
 def user_move_to_location(user_id, location_id):
     data = app.book.move_character_to_location(user_id = user_id, location_id = location_id)
-    response_data = {
-        "status": "success",
-        "type": "User moved to location",
-        "daemon_message": data,
-        "image_url": url_for('static', filename='images/default.jpg'),
-    }
-    return jsonify(response_data)
+    return jsonify(data)
 
 @app.route("/users/<user_id>/write", methods=["POST"])
 def user_write(user_id):
     data = request.get_json()
     text = data.get("text", "")
-    data = app.book.process_user_write(user_id = user_id, text = text)
-    
-    response_data = {
-        "status": "success",
-        "type": "User wrote something",
-        "daemon_message": data,
-        "image_url": url_for('static', filename='images/default.jpg'),
-    }
+    response_data = app.book.process_user_write(user_id = user_id, text = text)
     return jsonify(response_data)
 #------------------------------------------------------------------------------------------------------------------#
 

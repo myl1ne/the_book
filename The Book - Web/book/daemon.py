@@ -15,17 +15,35 @@ def get_daemon_location_prompt(location):
     You should infer your personality from it.
     """
 
+def get_daemon_name_from_location(location):
+    return f"""
+    Daemons are artificial intelligences bound to locations in an imaginary world.
+    Your task is to pick a name for a daemon bound to the location described in this document '{location}'.
+    Please state the daemon name and only its name.
+    """
+
 def get_daemon_event_player_arrived(character):
     return f"""
     An adventurer just arrived to your location. They are described by this document: {character}.
-    Greet them with a description of your location.
     """
 
 def get_daemon_event_player_text(character, text):
     return f"""
     You have received a text written by the following adventurer '{character}'
     Here is the written text: '{text}'.
-    What is your reaction?
+    """
+
+def get_daemon_event_player_text_classification():
+    return f"""
+    You can choose to react in 3 ways:
+    1) trigger a move of the user to another location through a path:
+    <format>move_character_to_location(<destination_id>)</format>
+    2) update the description of your bound location:
+    <format>update_location()</format>
+    3) simply answer the adventurer with natural language:
+    <format>answer(<YOUR ANSWER>)</format>
+
+    IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
     """
 
 def get_daemon_event_location_update(location):
@@ -38,7 +56,12 @@ def get_daemon_event_location_update(location):
     Here is its current document: {location}.
     Please return a document with any adjustments you'd like to make.
     Remember a few rules:
+    - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
+    - your main task is to update the description
     - you can add or remove paths, but there should always be at least 1
     - the destination_id of a path should be less than 3 words, ideally 1
-    Use the following format: response = {format}
+    
+    <format>{format}</format>
+
+    IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
     """
