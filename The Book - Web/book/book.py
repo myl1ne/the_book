@@ -4,6 +4,8 @@ import os
 import openai
 import logging
 from book.daemon import *
+from book.bucket_storage import BucketStorage
+
 openai.api_key = os.getenv("OPENAI_API_KEY")
 logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] - [%(levelname)s] - %(message)s')
 
@@ -24,14 +26,25 @@ def document_to_dict(document):
 
     return data
 
-class Storage:
+class Book:
     def __init__(self):
 
-        #Initialise the DB connection
+        #Initialise the Firestore connection
         certificate_path = os.environ.get('THE_BOOK_FIRESTORE_CERTIFICATE_PATH')
         self.cred = credentials.Certificate(certificate_path)
         initialize_app(self.cred)
         self.db = firestore.client()
+
+        #Initialise the GCS connection
+        self.bucket_storage = BucketStorage()
+
+        #Configure parameters for visual pipe
+        self.visual_generation_config = {
+            'requires_safety_checker': False, 
+            'height': 512, 'width': 512, 
+            'guidance_scale': 7.5,
+            'num_inference_steps': 100
+        }
 
     def on_new_user(self, user_id):
         logging.info(f'Creating new user {user_id}')
@@ -152,3 +165,13 @@ class Storage:
         )
         logging.info("chatgpt response: " + str(chat_completion))
         return chat_completion.choices[0].message.content
+    
+    def generate2D(self, prompt: str) -> str:
+        response = openai.Image.create(
+            prompt=prompt,
+            n=1,
+            size=str(self.visual_generation_config["height"]) + "x" + str(self.visual_generation_config["width"]),
+        )
+        image_url = response['data'][0]['url']
+
+        return self.bucket_storage.fetch_and_host_image(image_url)

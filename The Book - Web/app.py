@@ -1,12 +1,12 @@
 from flask import Flask, flash, url_for, make_response, Response, jsonify, render_template, request
 import os
-from book.storage import Storage
+from book.book import Book
 
 app = Flask(__name__)
 
 #------------------------------------------------------------------------------------------------------------------#
 app.is_ready = False
-app.storage = Storage()
+app.book = Book()
 app.is_ready = True
 #------------------------------------------------------------------------------------------------------------------#
 
@@ -16,7 +16,7 @@ def index():
 
 @app.route("/users/<id>/create", methods=["POST"])
 def user_create(id):
-    data = app.storage.on_new_user(user_id = id)
+    data = app.book.on_new_user(user_id = id)
     response_data = {
         "status": "success",
         "message": "User created successfully",
@@ -26,7 +26,7 @@ def user_create(id):
 
 @app.route("/users/<id>/log", methods=["POST"])
 def user_log(id):
-    data = app.storage.get_character_for_user(user_id = id)
+    data = app.book.get_character_for_user(user_id = id)
     response_data = {
         "status": "success",
         "message": "User logged successfully",
@@ -36,7 +36,7 @@ def user_log(id):
 
 @app.route("/users/<user_id>/move_to/<location_id>", methods=["POST"])
 def user_move_to_location(user_id, location_id):
-    data = app.storage.move_character_to_location(user_id = user_id, location_id = location_id)
+    data = app.book.move_character_to_location(user_id = user_id, location_id = location_id)
     response_data = {
         "status": "success",
         "type": "User moved to location",
@@ -49,7 +49,7 @@ def user_move_to_location(user_id, location_id):
 def user_write(user_id):
     data = request.get_json()
     text = data.get("text", "")
-    data = app.storage.process_user_write(user_id = user_id, text = text)
+    data = app.book.process_user_write(user_id = user_id, text = text)
     
     response_data = {
         "status": "success",
