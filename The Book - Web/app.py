@@ -1,6 +1,8 @@
 from flask import Flask, flash, url_for, make_response, Response, jsonify, render_template, request
 import os
 from book.book import Book
+from book.firestore_document import FireStoreDocument
+from book.user import User
 
 app = Flask(__name__)
 
@@ -9,7 +11,6 @@ app.is_ready = False
 app.book = Book()
 app.is_ready = True
 #------------------------------------------------------------------------------------------------------------------#
-
 @app.route("/", methods=["GET"])
 def index():
     return render_template("home.html")
@@ -20,17 +21,17 @@ def user_create(id):
     response_data = {
         "status": "success",
         "message": "User created successfully",
-        "character": data
+        "character": data['character'],
     }
     return jsonify(response_data)
 
 @app.route("/users/<id>/log", methods=["POST"])
 def user_log(id):
-    data = app.book.get_character_for_user(user_id = id)
+    user = User(id)
     response_data = {
         "status": "success",
         "message": "User logged successfully",
-        "character": data
+        "character": user.getDict()['character'],
     }
     return jsonify(response_data)
 
@@ -51,6 +52,17 @@ def user_write(user_id):
     response_data = app.book.process_user_write(user_id = user_id, text = text)
     return jsonify(response_data)
 #------------------------------------------------------------------------------------------------------------------#
-
+# Admin methods
+@app.route("/admin/data/clean", methods=["GET"])
+def admin_data_clean():
+    FireStoreDocument.wipe_collection('users')
+    FireStoreDocument.wipe_collection('daemons')
+    FireStoreDocument.wipe_collection('locations')
+    response_data = {
+        "status": "success",
+        "message": "Data cleaned successfully"
+    }
+    return jsonify(response_data)
+#------------------------------------------------------------------------------------------------------------------#
 if __name__ == "__main__":
     app.run()

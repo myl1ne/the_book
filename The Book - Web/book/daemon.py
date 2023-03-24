@@ -1,67 +1,202 @@
+from book.firestore_document import FireStoreDocument
+from firebase_admin import firestore
+from book.location import Location
+from book.logger import Log
+from book.generator import Generator
 import json
+import re
 
-def get_daemon_base_prompt(name):
-    return f"""
-    You are {name}.
-    You are a daemon: an artificial intelligence bound to a location in an imaginary world.
-    In this world, players can move between locations and interact through text with each other and with you.
-    As the daemon of your location, your duty is to give life to world by reacting to players actions.
-    You are a kind of game master, and you have a persona too.
-    """
+class Daemon(FireStoreDocument, Generator):
+    def __init__(self, id = None):
+        FireStoreDocument.__init__(self, 'daemons', id)
+        Generator.__init__(self)
+        self.trim_if_above_token = 2000
+        self.base_events_count = 2
+        self.base_events_to_trim = 1
+        self.base_chats_count = 2
+        self.base_chats_to_trim = 1
 
-def get_daemon_location_prompt(location):
-    return f"""
-    The location you are bound to is described in this document: {location}.
-    You should infer your personality from it.
-    """
+    #TODO move the trim logic inside the register methods and make them a transaction
+    def register_events(self, events):
+        self.update({
+            'messages.events': firestore.ArrayUnion(events)
+        })
 
-def get_daemon_name_from_location(location):
-    return f"""
-    Daemons are artificial intelligences bound to locations in an imaginary world.
-    Your task is to pick a name for a daemon bound to the location described in this document '{location}'.
-    Please state the daemon name and only its name.
-    """
+    #TODO move the trim logic inside the register methods and make them a transaction
+    def register_summons(self, user_id, summons_messages):
+        self.update({
+            f'messages.chats.{user_id}': firestore.ArrayUnion(summons_messages)
+        })
 
-def get_daemon_event_player_arrived(character):
-    return f"""
-    An adventurer just arrived to your location. They are described by this document: {character}.
-    """
+    def greet_user(self, user)->str:
+        dae_dict = self.getDict()
+        location = Location(dae_dict['bound_location'])
+        location_dict = location.getDict()
+        messages = [
+            {"role": "system", "content": Daemon.get_daemon_base_prompt(dae_dict['name'])},
+            {"role": "system", "content": Daemon.get_daemon_location_prompt(location_dict)},
+            {"role": "system", "content": Daemon.get_daemon_event_player_arrived(user)},
+            {"role": "system", "content":"Greet them with a description of your location."}
+        ]
+        (greetings, _token_count) = self.ask_large_language_model(messages)
+        return greetings                
 
-def get_daemon_event_player_text(character, text):
-    return f"""
-    You have received a text written by the following adventurer '{character}'
-    Here is the written text: '{text}'.
-    """
+    def update_location(self):
+        dae_dict = self.getDict()
+        location = Location(dae_dict['bound_location'])
+        location_dict = location.getDict()
 
-def get_daemon_event_player_text_classification():
-    return f"""
-    You can choose to react in 3 ways:
-    1) trigger a move of the user to another location through a path:
-    <format>move_character_to_location(<destination_id>)</format>
-    2) update the description of your bound location:
-    <format>update_location()</format>
-    3) simply answer the adventurer with natural language:
-    <format>answer(<YOUR ANSWER>)</format>
+        events = dae_dict['messages']['events']
+        events += [{"role": "system", "content": Daemon.get_daemon_event_location_update(location_dict)}]
 
-    IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
-    """
+        trials = 0
+        max_trials = 3
+        success = False
+        while (not success and trials < max_trials):
+            try:
+                (update_msg, token_count) = self.ask_large_language_model(events)
+                enclosed_msg = extract_enclosed_string(update_msg)
+                update_json = json.loads(enclosed_msg)
+                success = True
+            except:
+                Log.error(f'Failed to parse update message: {enclosed_msg}. Retrying...')
+                trials += 1
+        if (not success):
+            Log.error(f'Failed to parse update message {max_trials} times')
+            raise Exception(f'Failed to parse update message: {enclosed_msg}')
+        
+        Log.info(f'Updating location {location.id()} with changes {update_msg}')
+        
+        #Generate the new image URL
+        update_json['updated_location']['image_url'] = self.generate2D(update_json['updated_location']['description'])
 
-def get_daemon_event_location_update(location):
-    format = json.dumps({
-        'change':'A narrative description of what changed and how. It may be sent to present players.',
-        'updated_location': location
-    })
-    return f"""
-    As the daemon of your location, it is up to you to make it evolve.
-    Here is its current document: {location}.
-    Please return a document with any adjustments you'd like to make.
-    Remember a few rules:
-    - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
-    - your main task is to update the description
-    - you can add or remove paths, but there should always be at least 1
-    - the destination_id of a path should be less than 3 words, ideally 1
+        #Update the location doc
+        location.update(update_json['updated_location'])
+        
+        #Add to the daemon history & trim if needed
+        evt = {"role": "system", "content": f"You updated the location with: '{update_json['change']}'"}
+        if (token_count > self.trim_if_above_token):
+            del events[self.base_events_count:self.base_events_count+self.base_events_to_trim]
+            self.update({
+                'messages.events':events+[evt]
+            })
+        else:
+            self.register_events([evt])
+
+        return update_json  
+
+    def process_user_summon(self, user_dict, text):
+        dae_dict = self.getDict()
+
+        #TODO optimize, the location is fetched twice
+        location = Location(dae_dict['bound_location'])
+        location_dict = location.getDict()
+
+        #If we have not history with the user, we register the base prompts
+        if user_dict['id'] not in dae_dict['messages']['chats']:
+            self.register_summons(user_dict['id'], 
+                    [
+                        {"role": "system", "content": Daemon.get_daemon_base_prompt(dae_dict['name'])},
+                        {"role": "system", "content": Daemon.get_daemon_location_prompt(location_dict)}
+                    ]
+            )            
+        #Register the new message from the user
+        self.register_summons(user_dict['id'],[{"role": "system", "content": Daemon.get_daemon_event_player_text(user_dict, text)}])
+        #refresh the dict
+        dae_dict = self.getDict()
+
+        #Buffer with the classifcation prompt
+        chats = dae_dict['messages']['chats'][user_dict['id']]
+        messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_classification()}]
+        (answer, token_count) = self.ask_large_language_model(messages_buff)
+        
+        #Register the answer / clean up the history
+        evt = {"role": "assistant", "content": answer}
+        if (token_count > self.trim_if_above_token):
+            del chats[self.base_chats_count:self.base_chats_count+self.base_chats_to_trim]
+            self.update({f'messages.chat.{user_dict["id"]}': chats+[evt]})
+        else:
+            self.register_summons(user_dict['id'],[evt])
+        Log.info(f'Processed write of {user_dict["id"]} ==> {answer}')
+        return answer
     
-    <format>{format}</format>
+    @staticmethod
+    def get_daemon_base_prompt(name):
+        return f"""
+        You are {name}.
+        You are a daemon: an artificial intelligence bound to a location in an imaginary world.
+        In this world, players can move between locations and interact through text with each other and with you.
+        As the daemon of your location, your duty is to give life to world by reacting to players actions.
+        You are a kind of game master, and you have a persona too.
+        """
 
-    IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
-    """
+    @staticmethod
+    def get_daemon_location_prompt(location):
+        return f"""
+        The location you are bound to is described in this document: {location}.
+        You should infer your personality from it.
+        """
+
+    @staticmethod
+    def get_daemon_name_from_location(location):
+        return f"""
+        Daemons are artificial intelligences bound to locations in an imaginary world.
+        Your task is to pick a name for a daemon bound to the location described in this document '{location}'.
+        Please state the daemon name and only its name.
+        """
+
+    @staticmethod
+    def get_daemon_event_player_arrived(character):
+        return f"""
+        An adventurer just arrived to your location. They are described by this document: {character}.
+        """
+
+    @staticmethod
+    def get_daemon_event_player_text(character, text):
+        return f"""
+        You have received a text written by the following adventurer '{character}'
+        Here is the written text: '{text}'.
+        """
+
+    @staticmethod
+    def get_daemon_event_player_text_classification():
+        return f"""
+        You can choose to react in 3 ways:
+        - trigger a move of the user to another location through a path:
+        - update the description of your bound location:
+        - simply answer the adventurer with natural language:
+
+        IMPORTANT: your answer will be parsed by a regex: follow scrupulously the following format:
+            - move_character_to_location(<destination_id>)
+            - update_location()
+            - answer(<your_answer>)
+        """
+
+    @staticmethod
+    def get_daemon_event_location_update(location):
+        format = json.dumps({
+            'change':'A narrative description of what changed and how. It may be sent to present players.',
+            'updated_location': location
+        })
+        return f"""
+        As the daemon of your location, it is up to you to make it evolve.
+        Here is its current document: {location}.
+        Please return a document with any adjustments you'd like to make.
+        Remember a few rules:
+        - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
+        - your main task is to update the description
+        - you can add or remove paths, but there should always be at least 1
+        - the destination_id of a path should be less than 3 words, ideally 1
+        
+        <format>{format}</format>
+
+        IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
+        """
+    
+def extract_enclosed_string(text):
+    pattern = r"<format>(.*?)</format>"
+    match = re.search(pattern, text)
+    if match:
+        return match.group(1)
+    else:
+        return text
