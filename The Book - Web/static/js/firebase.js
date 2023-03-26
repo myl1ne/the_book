@@ -24,14 +24,35 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
 let currentUser = null;
+let creatingNewUser = false;
 
 auth.onAuthStateChanged((user) => {
     if (user) {
         console.log(`onAuthStateChanged: Used signed in: ${user}`)
         currentUser = user;
+        if (creatingNewUser) {
+            onNewUser();
+        } else {
+            onExistingUser();
+        }
+        const myEvent = new CustomEvent("book-event-login-update", {
+            detail: {
+                status: "logged-in",
+                user: user,
+            },
+        });
+        document.dispatchEvent(myEvent);
+        return true;
     } else {
         console.log(`onAuthStateChanged: Used signed out`)
         currentUser = null;
+        const myEvent = new CustomEvent("book-event-login-update", {
+            detail: {
+                status: "logged-out",
+                user: currentUser,
+            },
+        });
+        document.dispatchEvent(myEvent);
     }
 });
 
@@ -40,24 +61,63 @@ export function getCurrentUser() {
     return currentUser
 }
 
+
+function onNewUser() {
+    console.log("Authentication: New user registered");
+    const success = createUserDocument(currentUser);
+    if (success) {
+        console.log("User creation: Success");
+        const serverSuccess = createUserInServer(currentUser.uid);
+        if (serverSuccess) {
+            console.log("Character Creation: Success");
+            const daemon_message = move_user_to_location(currentUser.uid, "The Book");
+        }
+        else
+        {
+            console.log("Character Creation: Failure");
+        }
+    }
+    else
+    {
+        console.log("User Creation: Failure");
+    }
+}
+
+function onExistingUser() {
+    console.log("Authentication: Welcome back");
+    const serverSuccess = logUserInServer(currentUser.uid);
+    if (serverSuccess) {
+        console.log("Character Log: Success");
+        user_watch(currentUser.uid);
+    }
+    else
+    {
+        console.log("Character Log: Failure");
+    }
+}
+
 export async function authenticateUser(email, password) {
+    creatingNewUser = false;
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        return { user, isNewUser: false };
+        return { user, isNewUser: creatingNewUser };
     } catch (error) {
         if (error.code === "auth/user-not-found") {
             try {
+                creatingNewUser = true;
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
-                return { user, isNewUser: true };
+                return { user, isNewUser: creatingNewUser };
             } catch (signupError) {
+                creatingNewUser = false;
                 console.error("Error signing up:", signupError);
-                return { user: null, isNewUser: false };
+                return { user: null, isNewUser: creatingNewUser };
             }
         } else {
+            creatingNewUser = false;
             console.error("Error signing in:", error);
-            return { user: null, isNewUser: false };
+            return { user: null, isNewUser: creatingNewUser };
         }
     }
 }
