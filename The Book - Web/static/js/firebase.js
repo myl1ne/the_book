@@ -61,7 +61,6 @@ export function getCurrentUser() {
     return currentUser
 }
 
-
 function onNewUser() {
     console.log("Authentication: New user registered");
     const success = createUserDocument(currentUser);
