@@ -2,27 +2,30 @@ import openai
 import os
 from book.logger import Log
 from book.bucket_storage import BucketStorage
+from book.firestore_document import FireStoreDocument
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class Generator:
     __bucket_storage = None
+    __visual_generation_config = None
+    __llm_config = None
 
     def __init__(self) -> None:
         if Generator.__bucket_storage is None:
             Generator.__bucket_storage = BucketStorage()
 
-        #Configure parameters for visual pipe
-        self.visual_generation_config = {
-            'requires_safety_checker': False, 
-            'height': 512, 'width': 512, 
-            'guidance_scale': 7.5,
-            'num_inference_steps': 100
-        }
+        if Generator.__visual_generation_config is None:
+            Generator.__visual_generation_config = FireStoreDocument('configurations','image_generation').getDict()
+            Log.info(f"Visual generation config: {Generator.__visual_generation_config}")
+        
+        if Generator.__llm_config is None:
+            Generator.__llm_config = FireStoreDocument('configurations', 'large_language_model').getDict()
+            Log.info(f"llm config: {Generator.__llm_config}")
 
     def ask_large_language_model(self, messages):
         Log.debug("ask_large_language_model...")
         chat_completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=Generator.__llm_config['model'],
             messages=messages
         )
         Log.debug("ask_large_language_model... done")
@@ -33,7 +36,7 @@ class Generator:
         response = openai.Image.create(
             prompt=prompt,
             n=1,
-            size=str(self.visual_generation_config["height"]) + "x" + str(self.visual_generation_config["width"]),
+            size=str(Generator.__visual_generation_config["size"]),
         )
         image_url = response['data'][0]['url']
         Log.debug("generate2D: done")
