@@ -12,19 +12,19 @@ class Book:
     def on_new_user(self, user_id):
         Log.info(f'Creating new user {user_id}')
         user = User(user_id)
-        user.update({
+        user.set({
             'current_location': 'Unknown',
+            'image_url': url_for('static', filename='images/default.jpg'),
             'character': {
                 'name': 'Unknown',
                 'description': 'Unknown',
-                'image_url': url_for('static', filename='images/default.jpg'),
                 'age': 'Unknown',
                 'inventory': [],
             },
         })
         return user.getDict()
 
-    def on_new_location(self, loc_id):
+    def create_new_location(self, loc_id):
         Log.info(f'Creating new location {loc_id}')
         loc = Location(loc_id)
         dae = Daemon()
@@ -55,7 +55,8 @@ class Book:
                 },
         })
         #Ask the daemon to update the location
-        self.update_location(loc_id)
+        dae.update_location("You and this place are now bound together. Make it your own.")
+
         loc_dict = loc.getDict()
         Log.info(f'Created new location {loc_dict}')
         
@@ -97,7 +98,7 @@ class Book:
 
         location = Location(location_id)
         if not location.exists():
-            location_dict = self.on_new_location(location_id)
+            location_dict = self.create_new_location(location_id)
         else:
             location_dict = location.getDict()
 
@@ -130,56 +131,40 @@ class Book:
         dae = Daemon(location_dict['daemon'])
         answer = dae.process_user_summon(user_dict, text)
 
-        #execute the action
-        answer = extract_enclosed_string(answer)
-        move_regex = r".*move_character_to_location\((.+)\).*"
-        update_regex = r".*update_location\(\).*"
-        answer_regex = r".*answer\((.+)\).*"
-
-        move_match = re.search(move_regex, answer)
-        if move_match:
-            destination_id = move_match.group(1)
-            return self.move_character_to_location(user_id,destination_id)
-
-        update_match = re.search(update_regex, answer)
-        if update_match:
-            update_json = self.update_location(location.id())
+        if answer['classification'] == 'adventurer_left_through_path':
+            return self.move_character_to_location(user_id,answer['destination_id'])
+        
+        if answer['classification'] == 'adventurer_took_action_leading_to_narrative':   
             response_data = {
                 "status": "success",
                 "type": "User wrote something",
-                "daemon_message": update_json['change'],
-                "image_url": update_json['updated_location']['image_url']
-            }
-            return response_data
-
-        answer_match = re.search(answer_regex, answer)
-        if answer_match:
-            answer = answer_match.group(1)
-            response_data = {
-                "status": "success",
-                "type": "User wrote something",
-                "daemon_message": answer,
+                "daemon_message": answer['daemon_answer'],
                 "image_url": location_dict['image_url']
             }
             return response_data
         
-        response_data = {
+        if answer['classification'] == 'adventurer_took_action_leading_to_dialog':   
+            response_data = {
                 "status": "success",
                 "type": "User wrote something",
-                "daemon_message": f"The daemon speaks in tongues, maybe you can understand: {answer}",
+                "daemon_message": answer['daemon_answer'],
+                "image_url": location_dict['image_url']
+            }
+            return response_data
+        
+        if answer['classification'] == 'adventurer_took_action_leading_to_location_update':   
+            response_data = {
+                "status": "success",
+                "type": "User wrote something",
+                "daemon_message": answer['update_json']['change'],
+                "image_url": answer['update_json']['updated_location']['image_url']
+            }
+            return response_data        
+        
+        return {
+                "status": "success",
+                "type": "User wrote something",
+                "daemon_message": f"The daemon speaks in tongues, maybe you can understand: {answer['daemon_answer']}",
                 "image_url": location_dict['image_url']
         }
-        return response_data
-    
-    def update_location(self, location_id):
-        Log.info(f'Updating location {location_id}')
-        location = Location(location_id)
-        if not location.exists():
-            Log.error(f'Trying to update a non-existing location with id {location_id}')
-            pass
-        location_dict = location.getDict()
-        dae = Daemon(location_dict['daemon'])
-        update_json = dae.update_location()
-        Log.info(f'Updated location {location_id}')
-        return update_json
     

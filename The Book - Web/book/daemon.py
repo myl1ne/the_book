@@ -35,19 +35,19 @@ class Daemon(FireStoreDocument, Generator):
         messages = [
             {"role": "system", "content": Daemon.get_daemon_base_prompt(dae_dict['name'])},
             {"role": "system", "content": Daemon.get_daemon_location_prompt(location_dict)},
-            {"role": "system", "content": Daemon.get_daemon_event_player_arrived(user)},
+            {"role": "system", "content": Daemon.get_daemon_event_player_arrived(user['character'])},
             {"role": "system", "content":"Greet them with a description of your location."}
         ]
         (greetings, _token_count) = self.ask_large_language_model(messages)
         return greetings                
 
-    def update_location(self):
+    def update_location(self, reason_for_updating):
         dae_dict = self.getDict()
         location = Location(dae_dict['bound_location'])
         location_dict = location.getDict()
 
         events = dae_dict['messages']['events']
-        events += [{"role": "system", "content": Daemon.get_daemon_event_location_update(location_dict)}]
+        events += [{"role": "system", "content": Daemon.get_daemon_event_location_update(location_dict, reason_for_updating)}]
 
         trials = 0
         max_trials = 3
@@ -83,7 +83,7 @@ class Daemon(FireStoreDocument, Generator):
         else:
             self.register_events([evt])
 
-        return update_json  
+        return update_json
 
     def process_user_summon(self, user_dict, text):
         dae_dict = self.getDict()
@@ -106,35 +106,83 @@ class Daemon(FireStoreDocument, Generator):
         dae_dict = self.getDict()
 
         #Buffer with the classifcation prompt
+        message_classes = [
+            'adventurer_left_through_path', 
+            'adventurer_took_action_leading_to_narrative', 
+            'adventurer_took_action_leading_to_dialog',
+            'adventurer_took_action_leading_to_location_update',
+        ]
         chats = dae_dict['messages']['chats'][user_dict['id']]
-        messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_classification()}]
+        messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_classification(classes=message_classes)}]
         (answer, token_count) = self.ask_large_language_model(messages_buff)
-        
+
+        #execute the action
+        answer_data = {
+                "classification": "failure",
+                "daemon_answer": answer,
+        }
+        evt = [{"role": "system", "content": "You processed the message as: " + json.dumps(answer_data)}]
+        if 'adventurer_left_through_path' in answer:
+            messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_get_destination()}]
+            (destination_id, token_count) = self.ask_large_language_model(messages_buff)
+            answer_data = {
+                "classification": "adventurer_left_through_path",
+                "destination_id": destination_id,
+            }
+            evt = [{"role": "assistant", "content": "I send you to " + destination_id}]
+
+        if 'adventurer_took_action_leading_to_narrative' in answer:            
+            messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_answer_with_narrative()}]
+            (answer, token_count) = self.ask_large_language_model(messages_buff)
+            answer_data = {
+                "classification": "adventurer_took_action_leading_to_narrative",
+                "daemon_answer": answer,
+            }
+            evt = [{"role": "assistant", "content": answer}]
+
+        if 'adventurer_took_action_leading_to_dialog' in answer:            
+            messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_answer_with_dialog()}]
+            (answer, token_count) = self.ask_large_language_model(messages_buff)
+            answer_data = {
+                "classification": "adventurer_took_action_leading_to_dialog",
+                "daemon_answer": answer,
+            }
+            evt = [{"role": "assistant", "content": answer}]
+
+        if 'adventurer_took_action_leading_to_location_update' in answer:            
+            answer_data = {
+                "classification": "adventurer_took_action_leading_to_location_update",
+                "update_json": self.update_location(reason_for_updating="Adventurer wrote:'{text}'"),
+            }
+            evt = [{"role": "assistant", "content": answer_data['update_json']['change']}]
+
         #Register the answer / clean up the history
-        evt = {"role": "assistant", "content": answer}
         if (token_count > self.trim_if_above_token):
             del chats[self.base_chats_count:self.base_chats_count+self.base_chats_to_trim]
-            self.update({f'messages.chat.{user_dict["id"]}': chats+[evt]})
+            self.update({f'messages.chat.{user_dict["id"]}': chats+evt})
         else:
-            self.register_summons(user_dict['id'],[evt])
+            self.register_summons(user_dict['id'],evt)
         Log.info(f'Processed write of {user_dict["id"]} ==> {answer}')
-        return answer
+
+        return answer_data
     
     @staticmethod
     def get_daemon_base_prompt(name):
         return f"""
         You are {name}.
-        You are a daemon: an artificial intelligence bound to a location in an imaginary world.
+        You are a daemon bound to a location in an imaginary world.
         In this world, players can move between locations and interact through text with each other and with you.
-        As the daemon of your location, your duty is to give life to world by reacting to players actions.
-        You are a kind of game master, and you have a persona too.
+        Your duty is to give life to world by reacting to players actions.
+        You are both a game master, a storyteller and a character in the world.
+        Roleplay your character: DO NOT SAY you are an AI, instead say you are a daemon, a ghost, a spirit or something else of your choosing.
+        You define your own personality and you can be helpful, but you don't have to.
         """
 
     @staticmethod
     def get_daemon_location_prompt(location):
         return f"""
         The location you are bound to is described in this document: {location}.
-        You should infer your personality from it.
+        Infer your personality from the location: for example if the location is a forest, you could be a peaceful tree spirit. If it is a volcano, you could be a fiesty fire demon, etc.
         """
 
     @staticmethod
@@ -159,27 +207,45 @@ class Daemon(FireStoreDocument, Generator):
         """
 
     @staticmethod
-    def get_daemon_event_player_text_classification():
+    def get_daemon_event_player_text_classification(classes = ['adventurer_wants_to_move', 'location_update', 'natural_language']):
+        classes_str = '\n'.join(classes)
         return f"""
-        You can choose to react in 3 ways:
-        - trigger a move of the user to another location through a path:
-        - update the description of your bound location:
-        - simply answer the adventurer with natural language:
-
-        IMPORTANT: your answer will be parsed by a regex: follow scrupulously the following format:
-            - move_character_to_location(<destination_id>)
-            - update_location()
-            - answer(<your_answer>)
+        Your task is to classify the text you just received.
+        Return one of the following strings (only return the string, without any other text):
+            {classes_str}
         """
 
     @staticmethod
-    def get_daemon_event_location_update(location):
+    def get_daemon_event_player_text_get_destination():
+        return f"""
+        Please return a string that is the id of the destination location (only return the id, without any other text).
+        """
+    
+    @staticmethod
+    def get_daemon_event_player_text_answer_with_narrative():
+        return f"""
+        Please return a string that is the narrative you want to send to the player.
+        Be descriptive and use the third person for all characters, including yourself and the player.
+        Don't write any spoken dialog.
+        Wrap the string in <narrative> and </narrative> tags.
+        """
+
+    @staticmethod
+    def get_daemon_event_player_text_answer_with_dialog():
+        return f"""
+        Please return a string that is the speech you want to send to the player.
+        Wrap the string in <dialog> and </dialog> tags.
+        """
+    
+    @staticmethod
+    def get_daemon_event_location_update(location, reason_for_updating):
         format = json.dumps({
             'change':'A narrative description of what changed and how. It may be sent to present players.',
             'updated_location': location
         })
         return f"""
         As the daemon of your location, it is up to you to make it evolve.
+        You must update the location document because {reason_for_updating}.
         Here is its current document: {location}.
         Please return a document with any adjustments you'd like to make.
         Remember a few rules:
@@ -193,6 +259,20 @@ class Daemon(FireStoreDocument, Generator):
         IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
         """
     
+    @staticmethod
+    def get_daemon_event_adventurer_update(user_dict):
+        format = json.dumps({
+            'change':'A narrative description of what changed and how.',
+            'updated_adventurer': user_dict
+        })
+        return f"""
+        The last events lead to an update of the adventurer.
+        Here is its current document: {user_dict}.
+        Please return a document with any adjustments you'd like to make to the description or inventory.        
+        <format>{format}</format>
+        IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
+        """
+
 def extract_enclosed_string(text):
     pattern = r"<format>(.*?)</format>"
     match = re.search(pattern, text)

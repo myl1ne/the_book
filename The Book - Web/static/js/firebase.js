@@ -26,14 +26,14 @@ const auth = getAuth(app);
 let currentUser = null;
 let creatingNewUser = false;
 
-auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged(async (user) => {
     if (user) {
         console.log(`onAuthStateChanged: Used signed in: ${user}`)
         currentUser = user;
         if (creatingNewUser) {
-            onNewUser();
+            await onNewUser();
         } else {
-            onExistingUser();
+            await onExistingUser();
         }
         const myEvent = new CustomEvent("book-event-login-update", {
             detail: {
@@ -61,24 +61,16 @@ export function getCurrentUser() {
     return currentUser
 }
 
-function onNewUser() {
+async function onNewUser() {
     console.log("Authentication: New user registered");
-    const success = createUserDocument(currentUser);
-    if (success) {
-        console.log("User creation: Success");
-        const serverSuccess = createUserInServer(currentUser.uid);
-        if (serverSuccess) {
-            console.log("Character Creation: Success");
-            const daemon_message = move_user_to_location(currentUser.uid, "The Book");
-        }
-        else
-        {
-            console.log("Character Creation: Failure");
-        }
+    const serverSuccess = await createUserInServer(currentUser.uid);
+    if (serverSuccess) {
+        console.log("Character Creation: Success");
+        const daemon_message = await move_user_to_location(currentUser.uid, "The Book");
     }
     else
     {
-        console.log("User Creation: Failure");
+        console.log("Character Creation: Failure");
     }
 }
 
@@ -127,21 +119,6 @@ export async function logoutUser() {
         return true;
     } catch (error) {
         console.error("Error signing out:", error);
-        return false;
-    }
-}
-
-export async function createUserDocument(user) {
-    try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userData = {
-            email: user.email,
-        };
-
-        await setDoc(userDocRef, userData);
-        return true;
-    } catch (error) {
-        console.error("Error creating user document:", error);
         return false;
     }
 }

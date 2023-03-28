@@ -26,7 +26,8 @@ class Generator:
         Log.debug("ask_large_language_model...")
         chat_completion = openai.ChatCompletion.create(
             model=Generator.__llm_config['model'],
-            messages=messages
+            messages=messages,
+            max_tokens=Generator.__llm_config['max_tokens'],
         )
         Log.debug("ask_large_language_model... done")
         return (chat_completion.choices[0].message.content, chat_completion.usage["total_tokens"])
