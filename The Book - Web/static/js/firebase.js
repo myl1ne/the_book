@@ -66,7 +66,7 @@ async function onNewUser() {
     const serverSuccess = await createUserInServer(currentUser.uid);
     if (serverSuccess) {
         console.log("Character Creation: Success");
-        const daemon_message = await move_user_to_location(currentUser.uid, "The Book");
+        const daemon_message = await moveUserToLocation(currentUser.uid, "The Book");
     }
     else
     {
@@ -122,6 +122,29 @@ export async function logoutUser() {
         return false;
     }
 }
+
+export async function getUserDocument(user_id) {
+    try {
+        const response = await fetch(`/users/${user_id}/`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        } else {
+            console.error("Error getting user document:", response.statusText);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error fetching user document:", error);
+        return false;
+    }
+}
+
 
 export async function createUserInServer(id) {
     try {
@@ -199,7 +222,7 @@ export async function user_watch(user_id) {
     }
 }
 
-export async function move_user_to_location(user_id, location_id) {
+export async function moveUserToLocation(user_id, location_id) {
     try {
         const response = await fetch(`/users/${user_id}/move_to/${location_id}`, {
             method: "POST",

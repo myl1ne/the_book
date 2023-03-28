@@ -15,6 +15,20 @@ app.is_ready = True
 def index():
     return render_template("home.html")
 
+@app.route("/users/<user_id>/", methods=["GET"])
+def user_get(user_id):
+    user = User(user_id)
+    if user.exists():
+        return jsonify({
+            "status": "success",
+            "message": "User retrieved successfully",
+            "user": user.getDict(),
+        })
+    return jsonify({
+        "status": "error",
+        "message": "User does not exist",
+    })
+
 @app.route("/users/<id>/create", methods=["POST"])
 def user_create(id):
     data = app.book.on_new_user(user_id = id)
@@ -51,6 +65,8 @@ def user_write(user_id):
     text = data.get("text", "")
     response_data = app.book.process_user_write(user_id = user_id, text = text)
     return jsonify(response_data)
+
+
 #------------------------------------------------------------------------------------------------------------------#
 # Admin methods
 @app.route("/admin/data/clean", methods=["GET"])

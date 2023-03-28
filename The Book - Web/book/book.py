@@ -64,6 +64,7 @@ class Book:
         user.update({
             'current_location': location.id()
         })
+        user.addKnownLocation(location.id())
         user_dict = user.getDict()
 
         dae = Daemon(location_dict['daemon'])
@@ -90,7 +91,7 @@ class Book:
         dae = Daemon(location_dict['daemon'])
         answer = dae.process_user_summon(user_dict, text)
 
-        if answer['classification'] == 'adventurer_left_through_path':
+        if answer['classification'] == 'adventurer_took_action_leading_away':
             return self.move_character_to_location(user_id,answer['destination_id'])
         
         if answer['classification'] == 'adventurer_took_action_leading_to_narrative':   

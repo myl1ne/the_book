@@ -12,9 +12,9 @@ class Daemon(FireStoreDocument, Generator):
         Generator.__init__(self)
         self.trim_if_above_token = 2000
         self.base_events_count = 2
-        self.base_events_to_trim = 1
+        self.base_events_to_trim = 2
         self.base_chats_count = 2
-        self.base_chats_to_trim = 1
+        self.base_chats_to_trim = 2
 
     @staticmethod
     def getDefaults(name, loc_id):
@@ -131,10 +131,10 @@ class Daemon(FireStoreDocument, Generator):
 
         #Buffer with the classifcation prompt
         message_classes = [
-            'adventurer_left_through_path', 
-            'adventurer_took_action_leading_to_narrative', 
-            'adventurer_took_action_leading_to_dialog',
-            'adventurer_took_action_leading_to_location_update',
+            ('adventurer_took_action_leading_away', '(pick this if the adventurer left the current location or entered one of the paths.)'), 
+            ('adventurer_took_action_leading_to_narrative', '(pick this if the action led to a narrative event)'), 
+            ('adventurer_took_action_leading_to_dialog', '(pick this if the action led to a verbal answer from the daemon)'),
+            ('adventurer_took_action_leading_to_location_update', '(pick this if the action affected the state of the location)'),
         ]
         chats = dae_dict['messages']['chats'][user_dict['id']]
         messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_classification(classes=message_classes)}]
@@ -146,11 +146,11 @@ class Daemon(FireStoreDocument, Generator):
                 "daemon_answer": answer,
         }
         evt = [{"role": "system", "content": "You processed the message as: " + json.dumps(answer_data)}]
-        if 'adventurer_left_through_path' in answer:
+        if 'adventurer_took_action_leading_away' in answer:
             messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_get_destination()}]
             (destination_id, token_count) = self.ask_large_language_model(messages_buff)
             answer_data = {
-                "classification": "adventurer_left_through_path",
+                "classification": "adventurer_took_action_leading_away",
                 "destination_id": destination_id,
             }
             evt = [{"role": "assistant", "content": "I send you to " + destination_id}]
@@ -214,7 +214,8 @@ class Daemon(FireStoreDocument, Generator):
         return f"""
         Daemons are artificial intelligences bound to locations in an imaginary world.
         Your task is to pick a name for a daemon bound to the location described in this document '{location}'.
-        Please state the daemon name and only its name.
+        Find a name that fits the description of the location.
+        Please return a string that is the name of the daemon (return ONLY THE NAME, without any other text).
         """
 
     @staticmethod
@@ -231,11 +232,12 @@ class Daemon(FireStoreDocument, Generator):
         """
 
     @staticmethod
-    def get_daemon_event_player_text_classification(classes = ['adventurer_wants_to_move', 'location_update', 'natural_language']):
-        classes_str = '\n'.join(classes)
+    def get_daemon_event_player_text_classification(classes):
+        classes_str = '\n'.join([f'{item[0]} {item[1]}' for item in classes])
+
         return f"""
         Your task is to classify the text you just received.
-        Return one of the following strings (only return the string, without any other text):
+        Return one of the following strings (ONLY RETURN THE CLASS STRING, without any other text or explanation):
             {classes_str}
         """
 
@@ -280,20 +282,6 @@ class Daemon(FireStoreDocument, Generator):
         
         <format>{format}</format>
 
-        IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
-        """
-    
-    @staticmethod
-    def get_daemon_event_adventurer_update(user_dict):
-        format = json.dumps({
-            'change':'A narrative description of what changed and how.',
-            'updated_adventurer': user_dict
-        })
-        return f"""
-        The last events lead to an update of the adventurer.
-        Here is its current document: {user_dict}.
-        Please return a document with any adjustments you'd like to make to the description or inventory.        
-        <format>{format}</format>
         IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
         """
 

@@ -1,5 +1,5 @@
 <!-- Icons -->
-<div id="icon-container">
+<div id="icon-container" style="display: none;">
     <i class="fas fa-compass" id="teleport-icon"></i>
     <i class="fas fa-user" id="character-sheet-icon"></i>
     <i class="fas fa-suitcase" id="inventory-icon"></i>
@@ -8,62 +8,19 @@
 
 <!-- Modals -->
 <div id="teleport-modal" class="modal">
-    <div class="modal-content">
-        <h2>Teleportation</h2>
-        <p>Select a location to teleport:</p>
-        <select id="teleport-location">
-            <option value="location1">Location 1</option>
-            <option value="location2">Location 2</option>
-            <!-- Add more locations as needed -->
-        </select>
-        <button id="teleport-btn">Teleport</button>
-    </div>
+    {% include 'modals/teleport_modal.html' %}
 </div>
 
 <div id="character-sheet-modal" class="modal">
-    <div class="modal-content">
-        <h2>Character Sheet</h2>
-        <p>Name: <span id="character-name">John Doe</span></p>
-        <p>Level: <span id="character-level">1</span></p>
-        <p>Experience: <span id="character-experience">0</span> / <span id="character-next-level">100</span></p>
-        <p>Health: <span id="character-health">100</span> / <span id="character-max-health">100</span></p>
-        <p>Strength: <span id="character-strength">10</span></p>
-        <p>Agility: <span id="character-agility">10</span></p>
-        <p>Intelligence: <span id="character-intelligence">10</span></p>
-    </div>
+    {% include 'modals/character_sheet_modal.html' %}
 </div>
 
 <div id="inventory-modal" class="modal">
-    <div class="modal-content">
-        <h2>Inventory</h2>
-        <ul id="inventory-list">
-            <li>Sword</li>
-            <li>Health Potion</li>
-            <li>Shield</li>
-            <!-- Add more items as needed -->
-        </ul>
-    </div>
+    {% include 'modals/inventory_modal.html' %}
 </div>
 
 <div id="quests-modal" class="modal">
-    <div class="modal-content">
-        <h2>Quests</h2>
-        <ul id="quest-list">
-            <li>
-                <h3>Quest 1: Find the Hidden Treasure</h3>
-                <p>Description: Find the hidden treasure buried deep within the forest.</p>
-                <p>Status: <span id="quest1-status">In Progress</span></p>
-                <p>Reward: 100 gold coins</p>
-            </li>
-            <li>
-                <h3>Quest 2: Rescue the Lost Explorer</h3>
-                <p>Description: Rescue the explorer who has gone missing in the mountains.</p>
-                <p>Status: <span id="quest2-status">Not Started</span></p>
-                <p>Reward: A powerful artifact</p>
-            </li>
-            <!-- Add more quests as needed -->
-        </ul>
-    </div>
+    {% include 'modals/quests_modal.html' %}
 </div>
 
 <script type="module" src="{{ url_for('static', filename='js/modals.js') }}"></script>

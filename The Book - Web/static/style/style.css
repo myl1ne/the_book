@@ -174,3 +174,31 @@ narrative {
     width: 80%;
     color: #ddd;
 }
+
+.icon-image {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.inventory-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.item-description {
+    font-size: 14px;
+    color: #ccc;
+    margin-top: 4px;
+    margin-left: 5px;
+    margin-bottom: 8px;
+}
+
+.portrait-image {
+    width: 48px;
+    height: 64px;
+    margin-right: 10px;
+    vertical-align: middle;
+}

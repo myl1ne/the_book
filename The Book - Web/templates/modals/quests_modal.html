@@ -1,0 +1,42 @@
+<div class="modal-content">
+    <h2>Quests</h2>
+    <ul id="quest-list">
+        <li>
+            <h3>Quest 1: Find the Hidden Treasure</h3>
+            <p>Description: Find the hidden treasure buried deep within the forest.</p>
+            <p>Status: <span id="quest1-status">In Progress</span></p>
+            <p>Reward: 100 gold coins</p>
+        </li>
+        <li>
+            <h3>Quest 2: Rescue the Lost Explorer</h3>
+            <p>Description: Rescue the explorer who has gone missing in the mountains.</p>
+            <p>Status: <span id="quest2-status">Not Started</span></p>
+            <p>Reward: A powerful artifact</p>
+        </li>
+        <!-- Add more quests as needed -->
+    </ul>
+</div>
+
+<script>
+    function updateQuestsModalContent(character) {
+        const quests = document.getElementById("quest-list");
+        quests.innerHTML = "";
+        for (let i = 0; i < character.quests.length; i++) {
+            const quest = character.quests[i];
+            const li = document.createElement("li");
+            const h3 = document.createElement("h3");
+            h3.innerHTML = quest.name;
+            const p1 = document.createElement("p");
+            p1.innerHTML = "Description: " + quest.description;
+            const p2 = document.createElement("p");
+            p2.innerHTML = "Status: <span id=\"quest" + (i + 1) + "-status\">" + quest.status + "</span>";
+            const p3 = document.createElement("p");
+            p3.innerHTML = "Reward: " + quest.reward;
+            li.appendChild(h3);
+            li.appendChild(p1);
+            li.appendChild(p2);
+            li.appendChild(p3);
+            quests.appendChild(li);
+        }
+    }
+</script>
