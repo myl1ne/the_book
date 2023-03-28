@@ -35,7 +35,7 @@ class Generator:
     def generate2D(self, prompt: str) -> str:
         Log.debug("generate2D: " + prompt)
         response = openai.Image.create(
-            prompt=prompt,
+            prompt=prompt + " " + Generator.__visual_generation_config["suffix"],
             n=1,
             size=str(Generator.__visual_generation_config["size"]),
         )

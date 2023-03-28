@@ -16,6 +16,30 @@ class Daemon(FireStoreDocument, Generator):
         self.base_chats_count = 2
         self.base_chats_to_trim = 1
 
+    @staticmethod
+    def getDefaults(name, loc_id):
+        loc = Location(loc_id)
+        return {
+            'name': name,
+            'bound_location': loc.id(),
+            'messages': {
+                #contains a list of messages describing what happens to the place
+                'events': 
+                [
+                    {"role": "system", "content": Daemon.get_daemon_base_prompt(name)},
+                    {"role": "system", "content": Daemon.get_daemon_location_prompt(loc.getDict())}
+                ],
+                #contains a dictionary indexed by user ID to keep private conversations
+                'chats': {} 
+            },
+        }
+
+    def setDefault(self, name, loc_id):
+        if self.exists():
+            Log.error(f'Daemon {self.id()} already exists => Abort')
+            return
+        self.set(Daemon.getDefaults(name, loc_id))
+
     #TODO move the trim logic inside the register methods and make them a transaction
     def register_events(self, events):
         self.update({
@@ -218,7 +242,7 @@ class Daemon(FireStoreDocument, Generator):
     @staticmethod
     def get_daemon_event_player_text_get_destination():
         return f"""
-        Please return a string that is the id of the destination location (only return the id, without any other text).
+        Please return a string that is the id of the destination location (return ONLY THE ID, don't write any other text or explanation).
         """
     
     @staticmethod

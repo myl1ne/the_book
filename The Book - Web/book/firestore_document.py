@@ -43,7 +43,7 @@ class FireStoreDocument:
 
     @staticmethod
     def getNewId(colletion_name):
-        FireStoreDocument.__db.collection(colletion_name).document().id
+        return FireStoreDocument.__db.collection(colletion_name).document().id
 
     def id(self):
         return self.doc_ref.id
