@@ -91,7 +91,7 @@ class Book:
         dae = Daemon(location_dict['daemon'])
         answer = dae.process_user_summon(user_dict, text)
 
-        if answer['classification'] == 'adventurer_took_action_leading_away':
+        if answer['classification'] == 'adventurer_took_exit_path':
             return self.move_character_to_location(user_id,answer['destination_id'])
         
         if answer['classification'] == 'adventurer_took_action_leading_to_narrative':   
@@ -120,7 +120,16 @@ class Book:
                 "image_url": answer['update_json']['updated_location']['image_url']
             }
             return response_data        
-        
+
+        if answer['classification'] == 'adventurer_took_action_leading_inventory_update':   
+            response_data = {
+                "status": "success",
+                "type": "User wrote something",
+                "daemon_message": answer['update_json']['change'],
+                "image_url": location_dict['image_url']
+            }
+            return response_data        
+
         return {
                 "status": "success",
                 "type": "User wrote something",

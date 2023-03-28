@@ -1,6 +1,7 @@
 from book.firestore_document import FireStoreDocument
 from firebase_admin import firestore
 from book.location import Location
+from book.user import User
 from book.logger import Log
 from book.generator import Generator
 import json
@@ -64,6 +65,51 @@ class Daemon(FireStoreDocument, Generator):
         ]
         (greetings, _token_count) = self.ask_large_language_model(messages)
         return greetings                
+
+    def update_player_inventory(self, user_dict, reason_for_updating):
+        dae_dict = self.getDict()
+
+        events = dae_dict['messages']['events']
+        events += [{"role": "system", "content": Daemon.get_daemon_event_player_text_update_player_inventory(user_dict, reason_for_updating)}]
+
+        trials = 0
+        max_trials = 3
+        success = False
+        while (not success and trials < max_trials):
+            try:
+                (update_msg, token_count) = self.ask_large_language_model(events)
+                enclosed_msg = extract_enclosed_string(update_msg)
+                update_json = json.loads(enclosed_msg)
+                success = True
+            except:
+                Log.error(f'Failed to parse update message: {enclosed_msg}. Retrying...')
+                trials += 1
+        if (not success):
+            Log.error(f'Failed to parse update message {max_trials} times')
+            raise Exception(f'Failed to parse update message: {enclosed_msg}')
+        
+        Log.info(f"Updating inventory of {user_dict['character']['name']} with changes {update_msg}")
+        
+        #Generate the new image URL
+        for item in update_json['updated_player']['character']['inventory']:
+            if (item.get('image_url','NULL') == 'NULL'):
+             item['image_url'] = self.generate2D(item['description'])
+
+        #Update the location doc
+        user = User(user_dict['id'])
+        user.update(update_json['updated_player'])
+        
+        #Add to the daemon history & trim if needed
+        evt = {"role": "system", "content": f"You updated the player inventory with: '{update_json['change']}'"}
+        if (token_count > self.trim_if_above_token):
+            del events[self.base_events_count:self.base_events_count+self.base_events_to_trim]
+            self.update({
+                'messages.events':events+[evt]
+            })
+        else:
+            self.register_events([evt])
+
+        return update_json
 
     def update_location(self, reason_for_updating):
         dae_dict = self.getDict()
@@ -131,8 +177,9 @@ class Daemon(FireStoreDocument, Generator):
 
         #Buffer with the classifcation prompt
         message_classes = [
-            ('adventurer_took_action_leading_away', '(pick this if the adventurer left the current location or entered one of the paths.)'), 
-            ('adventurer_took_action_leading_to_narrative', '(pick this if the action led to a narrative event)'), 
+            ('adventurer_took_exit_path', '(pick this if the adventurer left the current location or entered one of the paths.)'), 
+            ('adventurer_took_action_leading_to_narrative', '(pick this if the action led to a narrative event)'),
+            ('adventurer_took_action_leading_inventory_update', '(pick this if the action affected the state of the inventory)'), 
             ('adventurer_took_action_leading_to_dialog', '(pick this if the action led to a verbal answer from the daemon)'),
             ('adventurer_took_action_leading_to_location_update', '(pick this if the action affected the state of the location)'),
         ]
@@ -146,11 +193,11 @@ class Daemon(FireStoreDocument, Generator):
                 "daemon_answer": answer,
         }
         evt = [{"role": "system", "content": "You processed the message as: " + json.dumps(answer_data)}]
-        if 'adventurer_took_action_leading_away' in answer:
+        if 'adventurer_took_exit_path' in answer:
             messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_get_destination()}]
             (destination_id, token_count) = self.ask_large_language_model(messages_buff)
             answer_data = {
-                "classification": "adventurer_took_action_leading_away",
+                "classification": "adventurer_took_exit_path",
                 "destination_id": destination_id,
             }
             evt = [{"role": "assistant", "content": "I send you to " + destination_id}]
@@ -163,6 +210,13 @@ class Daemon(FireStoreDocument, Generator):
                 "daemon_answer": answer,
             }
             evt = [{"role": "assistant", "content": answer}]
+
+        if 'adventurer_took_action_leading_inventory_update' in answer:            
+            answer_data = {
+                "classification": "adventurer_took_action_leading_inventory_update",
+                "update_json": self.update_player_inventory(user_dict=user_dict, reason_for_updating="Adventurer wrote:'{text}'"),
+            }
+            evt = [{"role": "assistant", "content": answer_data['update_json']['change']}]
 
         if 'adventurer_took_action_leading_to_dialog' in answer:            
             messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_answer_with_dialog()}]
@@ -248,6 +302,28 @@ class Daemon(FireStoreDocument, Generator):
         """
     
     @staticmethod
+    def get_daemon_event_player_text_update_player_inventory(user_dict, reason_for_updating):
+        format = json.dumps({
+            'change':'A narrative description of what changed and how.',
+            'updated_player': user_dict
+        })
+        return f"""
+        As the game master, you can give and take from player.
+        You must update the player document because: {reason_for_updating}.
+        Here is its current document: {user_dict}.
+        Please return a document with any adjustments you'd like to make.
+        Remember a few rules:
+        - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
+        - you can update the inventory content, nothing else
+        - you can add, remove or alter the description of items
+        - if you add or alter an item, set its image_url to "NULL", it will be updated automatically
+        
+        <format>{format}</format>
+
+        IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
+        """
+
+    @staticmethod
     def get_daemon_event_player_text_answer_with_narrative():
         return f"""
         Please return a string that is the narrative you want to send to the player.
@@ -276,7 +352,7 @@ class Daemon(FireStoreDocument, Generator):
         Please return a document with any adjustments you'd like to make.
         Remember a few rules:
         - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
-        - your main task is to update the description
+        - your main task is to update the description, exits and items
         - you can add or remove paths, but there should always be at least 1
         - the destination_id of a path should be less than 3 words, ideally 1
         

@@ -13,8 +13,11 @@ class Location(FireStoreDocument):
             'name': loc_id,
             'description': 'Unknown',
             'image_url': url_for('static', filename='images/default.jpg'),
-            'paths':[
+            'exit_paths':[
                 {'description':'A door.','destination_id':FireStoreDocument.getNewId('locations')}
+            ],
+            'pickable_objects':[
+                {'name':'Rusty Key', 'description':'An old metal key.'}
             ],
             'daemon':FireStoreDocument.getNewId('daemons')
         }
