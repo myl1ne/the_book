@@ -16,27 +16,18 @@ class BucketStorage:
     """
     def __init__(self):
         self.local_root = "./static/images/generated"
-
-        # get the Google cloud credentials path from the environment
-        credentials_path = os.environ.get("THE_BOOK_GOOGLE_APPLICATION_CREDENTIALS")
-        if credentials_path is None:
-            raise Exception("THE_BOOK_GOOGLE_APPLICATION_CREDENTIALS environment variable not set")
-        # get the bucket name from the environment
+        certificate_path = os.environ.get('THE_BOOK_GOOGLE_APPLICATION_CREDENTIALS')
+        if certificate_path != None:
+            certificate_path = os.environ.get('THE_BOOK_GOOGLE_APPLICATION_CREDENTIALS')
+            self.__storage_client = storage.Client.from_service_account_json(certificate_path)
+        else:
+            self.__storage_client = storage.Client()
+            
         bucket_name = os.environ.get("THE_BOOK_GOOGLE_BUCKET_NAME")
         if bucket_name is None:
             raise Exception("THE_BOOK_GOOGLE_BUCKET_NAME environment variable not set")
 
-        # initialize the storage client
-        logging.info("Initializing GCP storage client with credentials: " + credentials_path + " and bucket: " +
-                     bucket_name)
-        # also logs the content of the credentials file
-        logging.info("Credentials file content: " + str(open(credentials_path, "r").read()))
-
-        try:
-            self.__storage_client = storage.Client.from_service_account_json(credentials_path)
-            self.__bucket = self.__storage_client.get_bucket(bucket_name)
-        except Exception as e:
-            logging.error("Error while initializing GCP storage client: " + str(e))
+        self.__bucket = self.__storage_client.get_bucket(bucket_name)
 
     def host_image(self, image):
         """

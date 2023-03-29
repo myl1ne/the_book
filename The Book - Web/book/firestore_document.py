@@ -20,7 +20,10 @@ class FireStoreDocument:
     def static_init():
         if FireStoreDocument.__db == None:
             certificate_path = os.environ.get('THE_BOOK_FIRESTORE_CERTIFICATE_PATH')
-            initialize_app(credentials.Certificate(certificate_path))
+            if certificate_path != None:
+                initialize_app(credentials.Certificate(certificate_path))
+            else:
+                initialize_app()
             FireStoreDocument.__db = firestore.client()
 
     @staticmethod
