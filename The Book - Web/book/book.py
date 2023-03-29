@@ -12,48 +12,20 @@ class Book:
     def on_new_user(self, user_id):
         Log.info(f'Creating new user {user_id}')
         user = User(user_id)
-        user.set({
-            'current_location': 'Unknown',
-            'image_url': url_for('static', filename='images/default.jpg'),
-            'character': {
-                'name': 'Unknown',
-                'description': 'Unknown',
-                'age': 'Unknown',
-                'inventory': [],
-            },
-        })
+        user.setDefault()
         return user.getDict()
 
     def create_new_location(self, loc_id):
         Log.info(f'Creating new location {loc_id}')
         loc = Location(loc_id)
-        dae = Daemon()
 
         #create the location and summon a daemon into it
-        loc.set({
-            'name': loc_id,
-            'description': 'Unknown',
-            'image_url': url_for('static', filename='images/default.jpg'),
-            'paths':[
-                {'description':'A door.','destination_id':Location.getNewId('locations')}
-            ],
-            'daemon':dae.id()
-        })
+        loc.setDefault()
+        loc_dict = loc.getDict()
         #create the daemon
-        dae.set({
-                'name': 'Enoch',
-                'bound_location': loc.id(),
-                'messages': {
-                    #contains a list of messages describing what happens to the place
-                    'events': 
-                    [
-                        {"role": "system", "content": Daemon.get_daemon_base_prompt("Enoch")},
-                        {"role": "system", "content": Daemon.get_daemon_location_prompt(loc.getDict())}
-                    ],
-                    #contains a dictionary indexed by user ID to keep private conversations
-                    'chats': {} 
-                },
-        })
+        dae = Daemon(loc_dict['daemon'])
+        dae.setDefault(name = 'Enoch', loc_id = loc.id())
+
         #Ask the daemon to update the location
         dae.update_location("You and this place are now bound together. Make it your own.")
 
@@ -63,20 +35,7 @@ class Book:
         #Ask the daemon to update its name
         if loc_id != "The Book":
             new_daemon_name = dae.ask_large_language_model([{"role": "system", "content": Daemon.get_daemon_name_from_location(loc_dict)}])
-            dae.set({
-                    'name': new_daemon_name,
-                    'bound_location': loc.id(),
-                    'messages': {
-                        #contains a list of messages describing what happens to the place
-                        'events': 
-                        [
-                            {"role": "system", "content": Daemon.get_daemon_base_prompt(new_daemon_name)},
-                            {"role": "system", "content": Daemon.get_daemon_location_prompt(loc_dict)}
-                        ],
-                        #contains a dictionary indexed by user ID to keep private conversations
-                        'chats': {} 
-                    },
-            })
+            dae.set(Daemon.getDefaults(new_daemon_name, loc.id()))
         return loc_dict
 
     def get_current_location_for(self, user_id):
@@ -105,6 +64,7 @@ class Book:
         user.update({
             'current_location': location.id()
         })
+        user.addKnownLocation(location.id())
         user_dict = user.getDict()
 
         dae = Daemon(location_dict['daemon'])
@@ -131,7 +91,7 @@ class Book:
         dae = Daemon(location_dict['daemon'])
         answer = dae.process_user_summon(user_dict, text)
 
-        if answer['classification'] == 'adventurer_left_through_path':
+        if answer['classification'] == 'adventurer_took_exit_path':
             return self.move_character_to_location(user_id,answer['destination_id'])
         
         if answer['classification'] == 'adventurer_took_action_leading_to_narrative':   
@@ -160,7 +120,16 @@ class Book:
                 "image_url": answer['update_json']['updated_location']['image_url']
             }
             return response_data        
-        
+
+        if answer['classification'] == 'adventurer_took_action_leading_inventory_update':   
+            response_data = {
+                "status": "success",
+                "type": "User wrote something",
+                "daemon_message": answer['update_json']['change'],
+                "image_url": location_dict['image_url']
+            }
+            return response_data        
+
         return {
                 "status": "success",
                 "type": "User wrote something",

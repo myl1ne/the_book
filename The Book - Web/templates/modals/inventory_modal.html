@@ -1,0 +1,49 @@
+<div class="modal-content">
+    <h2>Inventory</h2>
+    <ul id="inventory-list">
+        <li class="inventory-item">
+          <img class="icon-image" src="{{ url_for('static', filename='/images/default.jpg') }}" alt="Item 1 Icon" />
+          <span>Sword</span>
+        </li>
+        <li class="inventory-item">
+          <img class="icon-image" src="{{ url_for('static', filename='/images/default.jpg') }}" alt="Item 2 Icon" />
+          <span>Health Potion</span>
+        </li>
+        <li class="inventory-item">
+          <img class="icon-image" src="{{ url_for('static', filename='/images/default.jpg') }}" alt="Item 3 Icon" />
+          <span>Shield</span>
+        </li>
+        <!-- Add more items as needed -->
+      </ul>
+</div>
+
+<script>
+function updateInventoryModalContent(character) {
+    const inventory = document.getElementById("inventory-list");
+    inventory.innerHTML = "";
+
+    for (let i = 0; i < character.inventory.length; i++) {
+        const item = character.inventory[i];
+
+        const li = document.createElement("li");
+        li.classList.add("inventory-item");
+
+        const img = document.createElement("img");
+        img.classList.add("icon-image");
+        img.src = item.image_url;
+        img.alt = item.name + " Icon";
+        li.appendChild(img);
+
+        const span = document.createElement("span");
+        span.innerHTML = item.name;
+        li.appendChild(span);
+
+        const description = document.createElement("p");
+        description.classList.add("item-description");
+        description.innerHTML = item.description;
+        li.appendChild(description);
+
+        inventory.appendChild(li);
+    }
+}
+</script>

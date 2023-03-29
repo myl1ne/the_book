@@ -7,7 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" crossorigin="anonymous">
+    
     <link rel="shortcut icon" href="{{ url_for('static', filename='/images/default.jpg') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='style/main.css') }}" />
 
@@ -28,6 +29,7 @@
 
         {% include 'login.html' %}
         {% include 'io.html' %}
+        {% include 'modals.html' %}
     </main>
 
 </body>

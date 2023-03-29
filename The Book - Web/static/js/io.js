@@ -65,5 +65,5 @@ document.getElementById("user-input-form").addEventListener("submit", async (eve
 
 document.addEventListener("book-event-content-update", async (event) => {
     console.log("book-event-content-update caught:", event.detail);
-    await updateContent(event.detail.image_url, event.detail.daemon_message, 50);
+    await updateContent(event.detail.image_url, event.detail.daemon_message, 20);
   });

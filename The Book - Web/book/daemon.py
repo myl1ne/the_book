@@ -1,6 +1,7 @@
 from book.firestore_document import FireStoreDocument
 from firebase_admin import firestore
 from book.location import Location
+from book.user import User
 from book.logger import Log
 from book.generator import Generator
 import json
@@ -12,9 +13,33 @@ class Daemon(FireStoreDocument, Generator):
         Generator.__init__(self)
         self.trim_if_above_token = 2000
         self.base_events_count = 2
-        self.base_events_to_trim = 1
+        self.base_events_to_trim = 2
         self.base_chats_count = 2
-        self.base_chats_to_trim = 1
+        self.base_chats_to_trim = 2
+
+    @staticmethod
+    def getDefaults(name, loc_id):
+        loc = Location(loc_id)
+        return {
+            'name': name,
+            'bound_location': loc.id(),
+            'messages': {
+                #contains a list of messages describing what happens to the place
+                'events': 
+                [
+                    {"role": "system", "content": Daemon.get_daemon_base_prompt(name)},
+                    {"role": "system", "content": Daemon.get_daemon_location_prompt(loc.getDict())}
+                ],
+                #contains a dictionary indexed by user ID to keep private conversations
+                'chats': {} 
+            },
+        }
+
+    def setDefault(self, name, loc_id):
+        if self.exists():
+            Log.error(f'Daemon {self.id()} already exists => Abort')
+            return
+        self.set(Daemon.getDefaults(name, loc_id))
 
     #TODO move the trim logic inside the register methods and make them a transaction
     def register_events(self, events):
@@ -40,6 +65,51 @@ class Daemon(FireStoreDocument, Generator):
         ]
         (greetings, _token_count) = self.ask_large_language_model(messages)
         return greetings                
+
+    def update_player_inventory(self, user_dict, reason_for_updating):
+        dae_dict = self.getDict()
+
+        events = dae_dict['messages']['events']
+        events += [{"role": "system", "content": Daemon.get_daemon_event_player_text_update_player_inventory(user_dict, reason_for_updating)}]
+
+        trials = 0
+        max_trials = 3
+        success = False
+        while (not success and trials < max_trials):
+            try:
+                (update_msg, token_count) = self.ask_large_language_model(events)
+                enclosed_msg = extract_enclosed_string(update_msg)
+                update_json = json.loads(enclosed_msg)
+                success = True
+            except:
+                Log.error(f'Failed to parse update message: {enclosed_msg}. Retrying...')
+                trials += 1
+        if (not success):
+            Log.error(f'Failed to parse update message {max_trials} times')
+            raise Exception(f'Failed to parse update message: {enclosed_msg}')
+        
+        Log.info(f"Updating inventory of {user_dict['character']['name']} with changes {update_msg}")
+        
+        #Generate the new image URL
+        for item in update_json['updated_player']['character']['inventory']:
+            if (item.get('image_url','NULL') == 'NULL'):
+             item['image_url'] = self.generate2D(item['description'])
+
+        #Update the location doc
+        user = User(user_dict['id'])
+        user.update(update_json['updated_player'])
+        
+        #Add to the daemon history & trim if needed
+        evt = {"role": "system", "content": f"You updated the player inventory with: '{update_json['change']}'"}
+        if (token_count > self.trim_if_above_token):
+            del events[self.base_events_count:self.base_events_count+self.base_events_to_trim]
+            self.update({
+                'messages.events':events+[evt]
+            })
+        else:
+            self.register_events([evt])
+
+        return update_json
 
     def update_location(self, reason_for_updating):
         dae_dict = self.getDict()
@@ -107,10 +177,11 @@ class Daemon(FireStoreDocument, Generator):
 
         #Buffer with the classifcation prompt
         message_classes = [
-            'adventurer_left_through_path', 
-            'adventurer_took_action_leading_to_narrative', 
-            'adventurer_took_action_leading_to_dialog',
-            'adventurer_took_action_leading_to_location_update',
+            ('adventurer_took_exit_path', '(pick this if the adventurer left the current location or entered one of the paths.)'), 
+            ('adventurer_took_action_leading_to_narrative', '(pick this if the action led to a narrative event)'),
+            ('adventurer_took_action_leading_inventory_update', '(pick this if the action affected the state of the inventory)'), 
+            ('adventurer_took_action_leading_to_dialog', '(pick this if the action led to a verbal answer from the daemon)'),
+            ('adventurer_took_action_leading_to_location_update', '(pick this if the action affected the state of the location)'),
         ]
         chats = dae_dict['messages']['chats'][user_dict['id']]
         messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_classification(classes=message_classes)}]
@@ -122,11 +193,11 @@ class Daemon(FireStoreDocument, Generator):
                 "daemon_answer": answer,
         }
         evt = [{"role": "system", "content": "You processed the message as: " + json.dumps(answer_data)}]
-        if 'adventurer_left_through_path' in answer:
+        if 'adventurer_took_exit_path' in answer:
             messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_get_destination()}]
             (destination_id, token_count) = self.ask_large_language_model(messages_buff)
             answer_data = {
-                "classification": "adventurer_left_through_path",
+                "classification": "adventurer_took_exit_path",
                 "destination_id": destination_id,
             }
             evt = [{"role": "assistant", "content": "I send you to " + destination_id}]
@@ -139,6 +210,13 @@ class Daemon(FireStoreDocument, Generator):
                 "daemon_answer": answer,
             }
             evt = [{"role": "assistant", "content": answer}]
+
+        if 'adventurer_took_action_leading_inventory_update' in answer:            
+            answer_data = {
+                "classification": "adventurer_took_action_leading_inventory_update",
+                "update_json": self.update_player_inventory(user_dict=user_dict, reason_for_updating="Adventurer wrote:'{text}'"),
+            }
+            evt = [{"role": "assistant", "content": answer_data['update_json']['change']}]
 
         if 'adventurer_took_action_leading_to_dialog' in answer:            
             messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_answer_with_dialog()}]
@@ -190,7 +268,8 @@ class Daemon(FireStoreDocument, Generator):
         return f"""
         Daemons are artificial intelligences bound to locations in an imaginary world.
         Your task is to pick a name for a daemon bound to the location described in this document '{location}'.
-        Please state the daemon name and only its name.
+        Find a name that fits the description of the location.
+        Please return a string that is the name of the daemon (return ONLY THE NAME, without any other text).
         """
 
     @staticmethod
@@ -207,20 +286,43 @@ class Daemon(FireStoreDocument, Generator):
         """
 
     @staticmethod
-    def get_daemon_event_player_text_classification(classes = ['adventurer_wants_to_move', 'location_update', 'natural_language']):
-        classes_str = '\n'.join(classes)
+    def get_daemon_event_player_text_classification(classes):
+        classes_str = '\n'.join([f'{item[0]} {item[1]}' for item in classes])
+
         return f"""
         Your task is to classify the text you just received.
-        Return one of the following strings (only return the string, without any other text):
+        Return one of the following strings (ONLY RETURN THE CLASS STRING, without any other text or explanation):
             {classes_str}
         """
 
     @staticmethod
     def get_daemon_event_player_text_get_destination():
         return f"""
-        Please return a string that is the id of the destination location (only return the id, without any other text).
+        Please return a string that is the id of the destination location (return ONLY THE ID, don't write any other text or explanation).
         """
     
+    @staticmethod
+    def get_daemon_event_player_text_update_player_inventory(user_dict, reason_for_updating):
+        format = json.dumps({
+            'change':'A narrative description of what changed and how.',
+            'updated_player': user_dict
+        })
+        return f"""
+        As the game master, you can give and take from player.
+        You must update the player document because: {reason_for_updating}.
+        Here is its current document: {user_dict}.
+        Please return a document with any adjustments you'd like to make.
+        Remember a few rules:
+        - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
+        - you can update the inventory content, nothing else
+        - you can add, remove or alter the description of items
+        - if you add or alter an item, set its image_url to "NULL", it will be updated automatically
+        
+        <format>{format}</format>
+
+        IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
+        """
+
     @staticmethod
     def get_daemon_event_player_text_answer_with_narrative():
         return f"""
@@ -250,26 +352,12 @@ class Daemon(FireStoreDocument, Generator):
         Please return a document with any adjustments you'd like to make.
         Remember a few rules:
         - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
-        - your main task is to update the description
+        - your main task is to update the description, exits and items
         - you can add or remove paths, but there should always be at least 1
         - the destination_id of a path should be less than 3 words, ideally 1
         
         <format>{format}</format>
 
-        IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
-        """
-    
-    @staticmethod
-    def get_daemon_event_adventurer_update(user_dict):
-        format = json.dumps({
-            'change':'A narrative description of what changed and how.',
-            'updated_adventurer': user_dict
-        })
-        return f"""
-        The last events lead to an update of the adventurer.
-        Here is its current document: {user_dict}.
-        Please return a document with any adjustments you'd like to make to the description or inventory.        
-        <format>{format}</format>
         IMPORTANT: your answer will be parsed by a regex: follow scrupulously the format within the tags. Do not send the tags.
         """
 
