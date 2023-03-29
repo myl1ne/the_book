@@ -1,10 +1,16 @@
 import { getCurrentUser, user_writes } from "./firebase.js";
 
 const sceneImage = document.getElementById("scene-image");
+const sceneTitle = document.getElementById("scene-title");
+const sceneDaemonName = document.getElementById("scene-daemon-name");
 const sceneText = document.getElementById("scene-text");
+const spinner = document.getElementById("loading-spinner");
+const inputForm = document.getElementById("user-input-form");
 
-export async function updateContent(imageUrl, text, delay = 100) {
+export async function updateContent(imageUrl, title, daemonName, text, delay = 100) {
     sceneImage.src = imageUrl;
+    sceneTitle.innerHTML = title;
+    sceneDaemonName.innerHTML = daemonName;
     sceneText.innerHTML = "";
   
     let currentTag = "";
@@ -59,11 +65,23 @@ document.getElementById("user-input-form").addEventListener("submit", async (eve
     const user_input = document.getElementById("user-input");
     const currentUser = getCurrentUser();
     console.log(`User ${currentUser.uid} is submitting ${user_input.value}`);
-    await user_writes(currentUser.uid, user_input.value);
+    user_writes(currentUser.uid, user_input.value);
     user_input.value = "";
+    sceneText.innerHTML = "";
+    // Disable input and show spinner
+    inputForm.disabled = true;
+    spinner.style.display = "block";
 });
 
 document.addEventListener("book-event-content-update", async (event) => {
     console.log("book-event-content-update caught:", event.detail);
-    await updateContent(event.detail.image_url, event.detail.daemon_message, 20);
+    // Hide spinner
+    spinner.style.display = "none";
+
+    //Show typewriter content
+    await updateContent(event.detail.image_url, event.detail.location_name, event.detail.daemon_name, event.detail.daemon_message, 30);
+
+    // Enable input
+    const input = document.getElementById("user-input-form");
+    inputForm.disabled = false;
   });

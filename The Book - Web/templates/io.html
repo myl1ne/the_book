@@ -1,9 +1,17 @@
 <div id="content">
     <img id="scene-image" src="{{ url_for('static', filename='images/welcome_book.png') }}" alt="Scene" />
-    <div id="scene-text">Who dares reading The Book?</div>
-    <!-- <div id="scene-chat">
-
-    </div> -->
+    <div id="scene-title">
+        The Book
+    </div>    
+    <div id="scene-daemon-name">
+        by Enoch
+    </div>
+    <div id="scene-text">
+        State your name, Reader.
+    </div>
+    <div id="loading-spinner" class="spinner">
+        <div class="circle"></div>
+    </div>
 </div>
 
 <div id="input-container" style="display:none;">

@@ -76,6 +76,8 @@ class Book:
             "status": "success",
             "type": "User moved to location",
             "daemon_message": greetings,
+            "daemon_name": dae.getDict()['name'],
+            "location_name": location_dict['name'],
             "image_url": location_dict['image_url']
         }
         return response_data
@@ -90,6 +92,7 @@ class Book:
 
         dae = Daemon(location_dict['daemon'])
         answer = dae.process_user_summon(user_dict, text)
+        dae_dict = dae.getDict()
 
         if answer['classification'] == 'adventurer_took_exit_path':
             return self.move_character_to_location(user_id,answer['destination_id'])
@@ -99,6 +102,8 @@ class Book:
                 "status": "success",
                 "type": "User wrote something",
                 "daemon_message": answer['daemon_answer'],
+                "daemon_name": dae_dict['name'],
+                "location_name": location_dict['name'],
                 "image_url": location_dict['image_url']
             }
             return response_data
@@ -108,6 +113,8 @@ class Book:
                 "status": "success",
                 "type": "User wrote something",
                 "daemon_message": answer['daemon_answer'],
+                "daemon_name": dae_dict['name'],
+                "location_name": location_dict['name'],
                 "image_url": location_dict['image_url']
             }
             return response_data
@@ -117,6 +124,8 @@ class Book:
                 "status": "success",
                 "type": "User wrote something",
                 "daemon_message": answer['update_json']['change'],
+                "daemon_name": dae_dict['name'],
+                "location_name": location_dict['name'],
                 "image_url": answer['update_json']['updated_location']['image_url']
             }
             return response_data        
@@ -126,6 +135,8 @@ class Book:
                 "status": "success",
                 "type": "User wrote something",
                 "daemon_message": answer['update_json']['change'],
+                "daemon_name": dae_dict['name'],
+                "location_name": location_dict['name'],
                 "image_url": location_dict['image_url']
             }
             return response_data        
@@ -134,6 +145,8 @@ class Book:
                 "status": "success",
                 "type": "User wrote something",
                 "daemon_message": f"The daemon speaks in tongues, maybe you can understand: {answer['daemon_answer']}",
+                "daemon_name": dae_dict['name'],
+                "location_name": location_dict['name'],
                 "image_url": location_dict['image_url']
         }
     

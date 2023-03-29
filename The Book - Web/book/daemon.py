@@ -355,6 +355,7 @@ class Daemon(FireStoreDocument, Generator):
         - your main task is to update the description, exits and items
         - you can add or remove paths, but there should always be at least 1
         - the destination_id of a path should be less than 3 words, ideally 1
+        - if any destination_id is an unreadable UID, replace it with a name for a location that could be connected to yours.
         
         <format>{format}</format>
 

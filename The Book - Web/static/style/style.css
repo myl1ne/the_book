@@ -69,6 +69,23 @@ main {
     box-shadow: 0 4px 6px rgba(105, 84, 84, 0.685), 0 1px 3px rgba(132, 119, 119, 0.08);
 }
 
+#scene-title {
+    font-family: 'Courier', monospace;
+    font-size: 24px;
+    color: #ddd;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+#scene-daemon-name {
+    font-family: 'Courier', monospace;
+    font-size: 20px;
+    color: #ddd;
+    font-style: italic;
+    text-align: center;
+    margin-bottom: 20px;
+}
 #scene-text {
     font-family: 'Courier', monospace;
     font-size: 20px;
@@ -104,6 +121,8 @@ dialog {
     font-family: 'Courier', monospace;
     font-size: 18px;
     color: #004f00;
+    background-color: transparent;
+    border: none;
 }
 
 narrative {
@@ -111,6 +130,31 @@ narrative {
     font-family: 'Courier', monospace;
     font-size: 18px;
     color: #5a7201;
+    background-color: transparent;
+    border: none;
+}
+
+.spinner {
+    display: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 999;
+}
+
+.spinner .circle {
+    border: 5px solid rgba(0, 0, 0, 0.1);
+    border-top-color: #555;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 #user-input {
