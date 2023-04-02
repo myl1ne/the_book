@@ -66,6 +66,28 @@ export function getCurrentUser() {
     return currentUser
 }
 
+export async function getUserDocument(user_id) {
+    try {
+        const response = await fetch(`/users/${user_id}/`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        } else {
+            console.error("Error getting user document:", response.statusText);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error fetching user document:", error);
+        return false;
+    }
+}
+
 export async function authenticateUser(email, password) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
