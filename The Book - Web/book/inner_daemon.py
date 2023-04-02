@@ -29,7 +29,7 @@ class InnerDaemon(FireStoreDocument, Generator):
                 'chat': [
                     {"role": "system", "content":InnerDaemon.get_daemon_character_creation_steps()[0]},
                     {"role": "system", "content":InnerDaemon.get_daemon_character_creation_steps()[1]},
-                    {"role": "assistant", "content":'''{"payload_type": "QUESTION","trait":"NAME", "question": "You summoned me... State your name, mortal."}'''},
+                    {"role": "assistant", "content":'''{"payload_type": "QUESTION","trait":"NAME", "question": "You summoned me... State the name of your character, mortal."}'''},
                 ], 
             },
         }
@@ -70,8 +70,19 @@ class InnerDaemon(FireStoreDocument, Generator):
                 {"role": "system", "content": InnerDaemon.get_daemon_character_creation_steps(self.creation_custom_traits_count)[daeDict['creation_step']]},   
             ]
             messages += msgs_to_add
-            (answer, _token_count) = self.ask_large_language_model(messages)
-            json_answer = json.loads(answer)
+
+            max_trials = 3
+            current_trial = 0
+            processed = False
+            while not processed and current_trial < max_trials:
+                try:
+                    (answer, _token_count) = self.ask_large_language_model(messages)
+                    json_answer = json.loads(answer)
+                    processed = True
+                except Exception as e:
+                    Log.error(f'Error while processing creation step: {e}')
+                    Log.error(f'Answer was: {answer}')
+                    current_trial += 1
             if json_answer['payload_type'] == 'IMAGE_CHOICE':
                 json_answer['options'] = self.generate2Dconcurrent([o['image_description'] for o in json_answer['options']], "256x256", ["Tarot card. Mystical. Abstract."])
             msgs_to_add += [{"role": "assistant", "content": json.dumps(json_answer)}]
@@ -215,9 +226,10 @@ class InnerDaemon(FireStoreDocument, Generator):
             Use this format for your message: 
             {
                 "payload_type": "CHARACTER_SHEET",
-                "name": "name of the player",
+                "name": "name the player chose for their character",
                 "inner_daemon_name": "choose a name for yourself, inner daemon",
-                "visual_description": "description of the character looks",
+                "character_visual_description": "description of the character looks",
+                "inner_daemon_visual_description": "description of yourself, inner daemon",
                 "psychology": "what is the character like, what is their personality",
                 "personal_quest": "what does the character want to achieve",
                 "occupation": "occupation of the character",
@@ -239,15 +251,28 @@ class InnerDaemon(FireStoreDocument, Generator):
     
     def on_character_creation_finished(self, character_sheet_payload):
         user = User(self.getDict()['bound_player'])
+        #Generate the visual content
+        url_character_portrait = self.generate2D(
+                prompt = character_sheet_payload['character_visual_description'],
+                additional_suffixes=['Character Portrait. Standing. Blurred detailed background.'],
+        )
+        url_inner_daemon_portrait = self.generate2D(
+                prompt = character_sheet_payload['inner_daemon_visual_description'],
+                additional_suffixes=['Character Portrait. Standing. Blurred detailed background.'],
+        )
+        prompts = [item['description'] for item in character_sheet_payload['inventory']]
+        image_urls = self.generate2Dconcurrent(prompts)
+        for item, image_url in zip(character_sheet_payload['inventory'], image_urls):
+            item['image_url'] = image_url
         
         #Create the character sheet
         user.update({
             'character.name': character_sheet_payload['name'],
-            'character.description': character_sheet_payload['visual_description'],
-            'character.image_url': self.generate2D(
-                prompt = character_sheet_payload['visual_description'],
-                additional_suffixes=['Character Portrait. Standing. Blurred detailed background.'],
-            ),
+            'character.description': character_sheet_payload['character_visual_description'],
+            'character.image_url': url_character_portrait,
+            'character.inner_daemon_name': character_sheet_payload['inner_daemon_name'],
+            'character.inner_daemon_description': character_sheet_payload['inner_daemon_visual_description'],
+            'character.inner_daemon_image_url': url_inner_daemon_portrait,
             'character.occupation': character_sheet_payload['occupation'],
             'character.psychology': character_sheet_payload['psychology'],
             'character.backstory': character_sheet_payload['backstory'],
@@ -264,7 +289,7 @@ class InnerDaemon(FireStoreDocument, Generator):
                     'reward': 'Unknown',
                 },
                 {
-                    'name': 'Deal with my Inner Daemon',
+                    'name': 'Deal with your Inner Daemon',
                     'description': character_sheet_payload['personal_quest'],
                     'status': 'In Progress',
                     'reward': 'Unknown',
@@ -324,6 +349,8 @@ class InnerDaemon(FireStoreDocument, Generator):
     def get_daemon_birth_message():
         return f"""
         Both you and the character where just born through an act of introspection.
-        Write a message to the player, introducing them to their character and yourself.
+        Write a message to the player, introducing them to yourself and to inner daemons.
+        Tell them they can find details about who they are in their character sheet.
+        Keep it short.
         End by asking telling them to open the book.
         """

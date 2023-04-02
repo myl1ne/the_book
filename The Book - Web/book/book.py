@@ -24,7 +24,6 @@ class Book:
         user_dict = user.getDict()
         inner_dae = InnerDaemon(user_dict['character']['inner_daemon_id'])
         step_data = inner_dae.process_creation_step(text)
-
         return step_data
 
     def create_new_location(self, loc_id):
@@ -106,7 +105,10 @@ class Book:
         user_dict = user.getDict()
 
         location = Location(user_dict['current_location'])
-        location_dict = location.getDict()
+        if not location.exists():
+            location_dict = self.create_new_location(user_dict['current_location'])
+        else:
+            location_dict = location.getDict()
 
         dae = Daemon(location_dict['daemon'])
         answer = dae.process_user_summon(user_dict, text)

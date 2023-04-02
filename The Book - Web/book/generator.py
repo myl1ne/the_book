@@ -55,10 +55,7 @@ class Generator:
             'image_description': prompt
         }
 
-    def generate2Dconcurrent(self, prompts, size_override = None, additional_suffixes = []):
-        results = []
+    def generate2Dconcurrent(self, prompts, size_override=None, additional_suffixes=[]):
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(self.generate2DwithMetadata, p, size_override, additional_suffixes) for p in prompts]
-            for future in concurrent.futures.as_completed(futures):
-                results.append(future.result())
+            results = list(executor.map(self.generate2DwithMetadata, prompts, [size_override] * len(prompts), [additional_suffixes] * len(prompts)))
         return results

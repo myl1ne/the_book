@@ -94,7 +94,7 @@ document.addEventListener("book-event-content-update", async (event) => {
                 for (const choice of event.detail.daemon_message.options) {
                     const button = document.createElement("button");
                     button.innerHTML = choice;
-                    button.classList.add("answer-button");
+                    button.classList.add("quick-reply");
                     button.addEventListener("click", () => {
                         showSpinner();
                         const currentUser = getCurrentUser();

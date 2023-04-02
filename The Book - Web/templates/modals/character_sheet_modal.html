@@ -4,6 +4,7 @@
         <img id="character-portrait" class="portrait-image" src="{{ url_for('static', filename='/images/book_icon.png') }}" alt="Character Portrait" />
         <div>
             <p>Name: <span id="character-name">John Doe</span></p>
+            <p>Inner Daemon: <span id="inner-daemon-name">Bobby</span></p>
             <div id="character-stats">
                 <p>Level:<span id="character-level">1</span></p>
                 <p>Experience: <span id="character-experience">0</span> / <span id="character-next-level">100</span></p>
@@ -13,11 +14,13 @@
                 <p>Intelligence: <span id="character-stats-intelligence">10</span></p>
             </div>
         </div>
+        <img id="inner-daemon-portrait" class="portrait-image" src="{{ url_for('static', filename='/images/book_icon.png') }}" alt="Inner Daemon Portrait" />
     </div>
     <div id="character-background">
         <h3>Background</h3>
         <h4>Description:</h4>
         <span id="character-description">A really average human.</span>
+        <span id="inner-daemon-description">A really average inner daemon.</span>
         <h4>Occupation:</h4>
         <span id="character-occupation">Gamer</span>
         <h4>Psychology:</h4>
@@ -30,8 +33,11 @@
 <script>
 function updateCharSheetModalContent(character) {
     document.getElementById("character-portrait").src = character.image_url;
+    document.getElementById("inner-daemon-portrait").src = character.inner_daemon_image_url;
     document.getElementById("character-name").innerHTML = character.name;
+    document.getElementById("inner-daemon-name").innerHTML = character.inner_daemon_name;
     document.getElementById("character-description").innerHTML = character.description;
+    document.getElementById("inner-daemon-description").innerHTML = character.inner_daemon_description;
     document.getElementById("character-occupation").innerHTML = character.occupation;
     document.getElementById("character-psychology").innerHTML = character.psychology;
     document.getElementById("character-backstory").innerHTML = character.backstory;
