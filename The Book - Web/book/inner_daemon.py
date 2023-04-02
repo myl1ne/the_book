@@ -16,7 +16,7 @@ class InnerDaemon(FireStoreDocument, Generator):
         self.base_events_to_trim = 2
         self.base_chats_count = 2
         self.base_chats_to_trim = 2
-        self.creation_custom_traits_count = 4
+        self.creation_custom_traits_count = 3
 
     @staticmethod
     def getDefaults(name, user_id):
@@ -81,6 +81,8 @@ class InnerDaemon(FireStoreDocument, Generator):
             })
             response_data['daemon_message'] = json_answer
 
+        if response_data['daemon_message']['payload_type'] == "CHARACTER_SHEET":
+            response_data = self.on_character_creation_finished(response_data['daemon_message'])
         return response_data
 
     def process_user_summon(self, text):
@@ -220,6 +222,11 @@ class InnerDaemon(FireStoreDocument, Generator):
                 "personal_quest": "what does the character want to achieve",
                 "occupation": "occupation of the character",
                 "backstory": "backstory of the character",
+                "stats": {
+                    "strength": "a number between 0 and 10",
+                    "agility": "a number between 0 and 10",
+                    "intelligence": "a number between 0 and 10",
+                },
                 "inventory": [
                     {"name": "item 1 name", "description": "description of item 1"},
                     {"name": "item 2 name", "description": "description of item 2"},
@@ -229,7 +236,69 @@ class InnerDaemon(FireStoreDocument, Generator):
             """
         ]
         return creations_steps
+    
+    def on_character_creation_finished(self, character_sheet_payload):
+        user = User(self.getDict()['bound_player'])
+        
+        #Create the character sheet
+        user.update({
+            'character.name': character_sheet_payload['name'],
+            'character.description': character_sheet_payload['visual_description'],
+            'character.image_url': self.generate2D(
+                prompt = character_sheet_payload['visual_description'],
+                additional_suffixes=['Character Portrait. Standing. Blurred detailed background.'],
+            ),
+            'character.occupation': character_sheet_payload['occupation'],
+            'character.psychology': character_sheet_payload['psychology'],
+            'character.backstory': character_sheet_payload['backstory'],
+            'character.level': 1,
+            'character.experience': 0,
+            'character.next_level': 100,
+            'character.stats': character_sheet_payload['stats'],
+            'character.inventory': character_sheet_payload['inventory'],
+            'character.quests': [
+                {
+                    'name': 'The Book', 
+                    'description': 'Learn more about The Book and the secrets it contains.', 
+                    'status': 'In Progress',
+                    'reward': 'Unknown',
+                },
+                {
+                    'name': 'Deal with my Inner Daemon',
+                    'description': character_sheet_payload['personal_quest'],
+                    'status': 'In Progress',
+                    'reward': 'Unknown',
+                }
+            ],
+            'character.known_locations': ['The Book'],
+            'current_location': 'The Book',
+        })
 
+        #Update the Inner Daemon (delete the chat)
+        messages = [
+            {"role": "system", "content":InnerDaemon.get_daemon_base_prompt(character_sheet_payload['inner_daemon_name'])},
+            {"role": "system", "content":InnerDaemon.get_daemon_personality_from_player(user.getDict())},
+            {"role": "system", "content":InnerDaemon.get_daemon_birth_message()},
+        ]
+        (answer, _token_count) = self.ask_large_language_model(messages)
+        messages.append({"role": "assistant", "content":answer})
+        self.update({
+            'name': character_sheet_payload['inner_daemon_name'],
+            'messages.chat': messages,
+        })
+
+        return {
+            "status": "success",
+            "type": "creation_step",
+            "location_name": 'The Self and the Other',
+            "daemon_name": character_sheet_payload['inner_daemon_name'],
+            "daemon_message": {
+                "payload_type": "QUESTION",
+                "question": answer,
+                "options": ["Open The Book"]
+            },
+            "image_url": url_for('static', filename='images/welcome_book.png')
+        }
     @staticmethod
     def get_daemon_base_prompt(name):
         return f"""
@@ -247,15 +316,14 @@ class InnerDaemon(FireStoreDocument, Generator):
     @staticmethod
     def get_daemon_personality_from_player(user):
         return f"""
-        The player you are bound to is described in this document: {user}.
-        Infer your personality from the player's archetype.
+        The player you are bound to evolved to have this character {user}.
+        Your own personality evolved to match the character's archetype.
         """
 
     @staticmethod
-    def get_daemon_name_from_player(user):
-        return """
-        Inner Daemons are artificial intelligences bound to players in an imaginary world.
-        Your task is to pick a name for a daemon bound to the player described in this document '{user}'.
-        Find a name that fits the archetype of that adventurer.
-        Please return the following format: {'name': 'name of the daemon'}
-        """.format(user=user)
+    def get_daemon_birth_message():
+        return f"""
+        Both you and the character where just born through an act of introspection.
+        Write a message to the player, introducing them to their character and yourself.
+        End by asking telling them to open the book.
+        """
