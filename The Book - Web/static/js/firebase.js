@@ -67,27 +67,23 @@ export function getCurrentUser() {
 }
 
 export async function authenticateUser(email, password) {
-    creatingNewUser = false;
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        return { user, isNewUser: creatingNewUser };
+        return { user };
     } catch (error) {
         if (error.code === "auth/user-not-found") {
             try {
-                creatingNewUser = true;
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
-                return { user, isNewUser: creatingNewUser };
+                return { user  };
             } catch (signupError) {
-                creatingNewUser = false;
                 console.error("Error signing up:", signupError);
-                return { user: null, isNewUser: creatingNewUser };
+                return { user: null };
             }
         } else {
-            creatingNewUser = false;
             console.error("Error signing in:", error);
-            return { user: null, isNewUser: creatingNewUser };
+            return { user: null };
         }
     }
 }
