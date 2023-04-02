@@ -243,7 +243,7 @@ class Daemon(FireStoreDocument, Generator):
         Log.info(f'Processed write of {user_dict["id"]} ==> {answer}')
 
         return answer_data
-    
+
     @staticmethod
     def get_daemon_base_prompt(name):
         return f"""

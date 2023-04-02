@@ -7,7 +7,7 @@ class User(FireStoreDocument):
         FireStoreDocument.__init__(self, 'users', id)
 
     @staticmethod
-    def getDefaults():
+    def getDefaultsOld():
         return {
             'name': 'John Doe',
             'email': 'john@doe.com',
@@ -41,6 +41,15 @@ class User(FireStoreDocument):
                     },
                 ],
                 'known_locations': ['The Book'],
+            }
+        }
+    
+    def getDefaults():
+        return {
+            'name': 'John Doe',
+            'email': 'john@doe.com',
+            'character': {
+                'inner_daemon_id': FireStoreDocument.getNewId('inner_daemons'),
             }
         }
 

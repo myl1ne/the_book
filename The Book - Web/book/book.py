@@ -3,6 +3,7 @@ from book.logger import Log
 from book.user import User
 from book.location import Location
 from book.daemon import Daemon, extract_enclosed_string
+from book.inner_daemon import InnerDaemon
 from flask import url_for
    
 class Book:
@@ -13,7 +14,16 @@ class Book:
         Log.info(f'Creating new user {user_id}')
         user = User(user_id)
         user.setDefault()
-        return user.getDict()
+        user_dict = user.getDict()
+        InnerDaemon(user_dict['character']['inner_daemon_id']).setDefault(name = 'Unknown', user_id = user.id())
+        return user_dict
+
+    def on_creation_step(self, user_id, text):
+        Log.info(f'Processing creation step for {user_id}')
+        user = User(user_id)
+        user_dict = user.getDict()
+        inner_dae = InnerDaemon(user_dict['character']['inner_daemon_id'])
+        return inner_dae.process_creation_step(text)
 
     def create_new_location(self, loc_id):
         Log.info(f'Creating new location {loc_id}')
@@ -44,9 +54,12 @@ class Book:
         user_dict = user.getDict()
         location = Location(user_dict['current_location'])
         location_dict = location.getDict()
+        dae = Daemon(location_dict['daemon'])
         response_data = {
             "status": "success",
             "type": "User observing current location",
+            "daemon_name": dae.getDict()['name'],
+            "location_name": location_dict['name'],
             "daemon_message": location_dict['description'],
             "image_url": location_dict['image_url']
         }

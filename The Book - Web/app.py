@@ -3,6 +3,7 @@ import os
 from book.book import Book
 from book.firestore_document import FireStoreDocument
 from book.user import User
+from book.inner_daemon import InnerDaemon
 
 app = Flask(__name__)
 
@@ -11,6 +12,22 @@ app.is_ready = False
 app.book = Book()
 app.is_ready = True
 #------------------------------------------------------------------------------------------------------------------#
+# Helper functions
+def is_user_in_creation_process(user_id):
+    user = User(user_id)
+    if user.exists():
+        character = user.getDict()['character']
+        inner_daemon = InnerDaemon(character['inner_daemon_id'])
+        inner_daemon_dict = inner_daemon.getDict()
+        if inner_daemon_dict['creation_step'] < len(InnerDaemon.get_daemon_character_creation_steps(inner_daemon.creation_custom_traits_count)):
+            return True
+        else:
+            return False
+    else:
+        raise Exception(f"User {user_id} does not exist")
+
+#------------------------------------------------------------------------------------------------------------------#
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template("home.html")
@@ -29,19 +46,11 @@ def user_get(user_id):
         "message": "User does not exist",
     })
 
-@app.route("/users/<id>/create", methods=["POST"])
-def user_create(id):
-    data = app.book.on_new_user(user_id = id)
-    response_data = {
-        "status": "success",
-        "message": "User created successfully",
-        "character": data['character'],
-    }
-    return jsonify(response_data)
-
 @app.route("/users/<id>/log", methods=["POST"])
 def user_log(id):
     user = User(id)
+    if not user.exists():
+        app.book.on_new_user(user_id = id)
     response_data = {
         "status": "success",
         "message": "User logged successfully",
@@ -51,8 +60,14 @@ def user_log(id):
 
 @app.route("/users/<user_id>/watch", methods=["POST"])
 def user_watch(user_id):
-    data = app.book.get_current_location_for(user_id = user_id)
-    return jsonify(data)
+    '''
+    This method is called after a user logs in.
+    It either redirect to watching the current location or to the creation process.
+    '''
+    if is_user_in_creation_process(user_id):
+        return jsonify(app.book.on_creation_step(user_id, text = None))
+    else:
+        return jsonify(app.book.get_current_location_for(user_id = user_id))
 
 @app.route("/users/<user_id>/move_to/<location_id>", methods=["POST"])
 def user_move_to_location(user_id, location_id):
@@ -62,16 +77,19 @@ def user_move_to_location(user_id, location_id):
 @app.route("/users/<user_id>/write", methods=["POST"])
 def user_write(user_id):
     data = request.get_json()
-    text = data.get("text", "")
-    response_data = app.book.process_user_write(user_id = user_id, text = text)
+    text = data["text"]
+    if is_user_in_creation_process(user_id):
+        response_data = app.book.on_creation_step(user_id, text = text)
+    else:
+        response_data = app.book.process_user_write(user_id = user_id, text = text)
     return jsonify(response_data)
-
 
 #------------------------------------------------------------------------------------------------------------------#
 # Admin methods
 @app.route("/admin/data/clean", methods=["GET"])
 def admin_data_clean():
     FireStoreDocument.wipe_collection('users')
+    FireStoreDocument.wipe_collection('inner_daemons')
     FireStoreDocument.wipe_collection('daemons')
     FireStoreDocument.wipe_collection('locations')
     response_data = {

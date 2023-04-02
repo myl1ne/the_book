@@ -24,25 +24,30 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
 let currentUser = null;
-let creatingNewUser = false;
 
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         console.log(`onAuthStateChanged: Used signed in: ${user}`)
         currentUser = user;
-        if (creatingNewUser) {
-            await onNewUser();
-        } else {
-            await onExistingUser();
+        const serverSuccess = await logUserInServer(currentUser.uid);
+        if (serverSuccess) {
+            console.log("Character Log: Success");
+            
+            const myEvent = new CustomEvent("book-event-login-update", {
+                detail: {
+                    status: "logged-in",
+                    user: user,
+                },
+            });
+            document.dispatchEvent(myEvent);
+            await user_watch(currentUser.uid);
+            return true;
         }
-        const myEvent = new CustomEvent("book-event-login-update", {
-            detail: {
-                status: "logged-in",
-                user: user,
-            },
-        });
-        document.dispatchEvent(myEvent);
-        return true;
+        else
+        {
+            console.log("Character Log: Failure");
+            return false;
+        }
     } else {
         console.log(`onAuthStateChanged: Used signed out`)
         currentUser = null;
@@ -59,32 +64,6 @@ auth.onAuthStateChanged(async (user) => {
 // Functions
 export function getCurrentUser() {
     return currentUser
-}
-
-async function onNewUser() {
-    console.log("Authentication: New user registered");
-    const serverSuccess = await createUserInServer(currentUser.uid);
-    if (serverSuccess) {
-        console.log("Character Creation: Success");
-        const daemon_message = await moveUserToLocation(currentUser.uid, "The Book");
-    }
-    else
-    {
-        console.log("Character Creation: Failure");
-    }
-}
-
-function onExistingUser() {
-    console.log("Authentication: Welcome back");
-    const serverSuccess = logUserInServer(currentUser.uid);
-    if (serverSuccess) {
-        console.log("Character Log: Success");
-        user_watch(currentUser.uid);
-    }
-    else
-    {
-        console.log("Character Log: Failure");
-    }
 }
 
 export async function authenticateUser(email, password) {
@@ -119,53 +98,6 @@ export async function logoutUser() {
         return true;
     } catch (error) {
         console.error("Error signing out:", error);
-        return false;
-    }
-}
-
-export async function getUserDocument(user_id) {
-    try {
-        const response = await fetch(`/users/${user_id}/`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            return data;
-        } else {
-            console.error("Error getting user document:", response.statusText);
-            return false;
-        }
-    } catch (error) {
-        console.error("Error fetching user document:", error);
-        return false;
-    }
-}
-
-
-export async function createUserInServer(id) {
-    try {
-        const response = await fetch(`/users/${id}/create`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Server response:", data);
-            // Use the JSON data in your application
-            return true;
-        } else {
-            console.error("Error creating user on server:", response.statusText);
-            return false;
-        }
-    } catch (error) {
-        console.error("Error creating user on server:", error);
         return false;
     }
 }

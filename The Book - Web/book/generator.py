@@ -3,6 +3,7 @@ import os
 from book.logger import Log
 from book.bucket_storage import BucketStorage
 from book.firestore_document import FireStoreDocument
+import concurrent.futures
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class Generator:
@@ -31,13 +32,13 @@ class Generator:
         )
         Log.debug("ask_large_language_model... done")
         return (chat_completion.choices[0].message.content, chat_completion.usage["total_tokens"])
-    
-    def generate2D(self, prompt: str) -> str:
-        Log.debug("generate2D: " + prompt)
+
+    def generate2D(self, prompt: str, size_override = None) -> str:
+        Log.debug("generate2D: " + str(prompt))
         response = openai.Image.create(
             prompt=prompt + " " + Generator.__visual_generation_config["suffix"],
             n=1,
-            size=str(Generator.__visual_generation_config["size"]),
+            size=size_override or str(Generator.__visual_generation_config["size"]),
         )
         image_url = response['data'][0]['url']
         Log.debug("generate2D: done")
@@ -45,3 +46,17 @@ class Generator:
         image_url = Generator.__bucket_storage.fetch_and_host_image(image_url)
         Log.debug(f"host image: done ({image_url})")
         return image_url
+    
+    def generate2DwithMetadata(self, prompt, size_override = None):
+        return {
+            'image_url': self.generate2D(prompt, size_override),
+            'image_description': prompt
+        }
+
+    def generate2Dconcurrent(self, prompts, size_override = None):
+        results = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self.generate2DwithMetadata, p, size_override) for p in prompts]
+            for future in concurrent.futures.as_completed(futures):
+                results.append(future.result())
+        return results
