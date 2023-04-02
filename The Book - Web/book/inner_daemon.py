@@ -16,7 +16,7 @@ class InnerDaemon(FireStoreDocument, Generator):
         self.base_events_to_trim = 2
         self.base_chats_count = 2
         self.base_chats_to_trim = 2
-        self.creation_custom_traits_count = 3
+        self.creation_custom_traits_count = 1
 
     @staticmethod
     def getDefaults(name, user_id):
@@ -260,10 +260,10 @@ class InnerDaemon(FireStoreDocument, Generator):
                 prompt = character_sheet_payload['inner_daemon_visual_description'],
                 additional_suffixes=['Character Portrait. Standing. Blurred detailed background.'],
         )
-        prompts = [item['description'] for item in character_sheet_payload['inventory']]
-        image_urls = self.generate2Dconcurrent(prompts)
-        for item, image_url in zip(character_sheet_payload['inventory'], image_urls):
-            item['image_url'] = image_url
+        prompts = [item['name'] for item in character_sheet_payload['inventory']]
+        generation_resutls = self.generate2Dconcurrent(prompts)
+        for item, image_url in zip(character_sheet_payload['inventory'], generation_resutls):
+            item['image_url'] = image_url['image_url']
         
         #Create the character sheet
         user.update({
