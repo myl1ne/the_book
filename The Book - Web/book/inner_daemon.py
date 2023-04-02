@@ -73,7 +73,7 @@ class InnerDaemon(FireStoreDocument, Generator):
             (answer, _token_count) = self.ask_large_language_model(messages)
             json_answer = json.loads(answer)
             if json_answer['payload_type'] == 'IMAGE_CHOICE':
-                json_answer['options'] = self.generate2Dconcurrent([o['image_description'] for o in json_answer['options']], "256x256")
+                json_answer['options'] = self.generate2Dconcurrent([o['image_description'] for o in json_answer['options']], "256x256", ["Tarot card. Mystical. Abstract."])
             msgs_to_add += [{"role": "assistant", "content": json.dumps(json_answer)}]
             self.update({
                 'creation_step': daeDict['creation_step'] + 1,

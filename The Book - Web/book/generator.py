@@ -33,10 +33,12 @@ class Generator:
         Log.debug("ask_large_language_model... done")
         return (chat_completion.choices[0].message.content, chat_completion.usage["total_tokens"])
 
-    def generate2D(self, prompt: str, size_override = None) -> str:
+    def generate2D(self, prompt: str, size_override = None, additional_suffixes = []) -> str:
         Log.debug("generate2D: " + str(prompt))
         response = openai.Image.create(
-            prompt=prompt + " " + Generator.__visual_generation_config["suffix"],
+            prompt=prompt + 
+            " " + Generator.__visual_generation_config["suffix"] + 
+            " " + " ".join(additional_suffixes),
             n=1,
             size=size_override or str(Generator.__visual_generation_config["size"]),
         )
@@ -47,16 +49,16 @@ class Generator:
         Log.debug(f"host image: done ({image_url})")
         return image_url
     
-    def generate2DwithMetadata(self, prompt, size_override = None):
+    def generate2DwithMetadata(self, prompt, size_override = None, additional_suffixes = []):
         return {
-            'image_url': self.generate2D(prompt, size_override),
+            'image_url': self.generate2D(prompt, size_override, additional_suffixes),
             'image_description': prompt
         }
 
-    def generate2Dconcurrent(self, prompts, size_override = None):
+    def generate2Dconcurrent(self, prompts, size_override = None, additional_suffixes = []):
         results = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(self.generate2DwithMetadata, p, size_override) for p in prompts]
+            futures = [executor.submit(self.generate2DwithMetadata, p, size_override, additional_suffixes) for p in prompts]
             for future in concurrent.futures.as_completed(futures):
                 results.append(future.result())
         return results
