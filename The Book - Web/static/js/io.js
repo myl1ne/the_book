@@ -7,7 +7,8 @@ const sceneText = document.getElementById("scene-text");
 const sceneAnswerImgs = document.getElementById("scene-answer-images");
 const sceneAnswerQuickReplies = document.getElementById("scene-answer-quick-replies");
 const spinner = document.getElementById("loading-spinner");
-const inputForm = document.getElementById("user-input-form");
+const inputForm = document.getElementById("user-input-form"); 
+const userInputText = document.getElementById("user-input");
 
 export async function updateContent(imageUrl, title, daemonName, text, delay = 100) {
     sceneImage.src = imageUrl;
@@ -44,15 +45,6 @@ export async function updateContent(imageUrl, title, daemonName, text, delay = 1
     }
   }
   
-  function appendTextNode(parent, text) {
-    const textNode = document.createTextNode(text);
-    if (parent.lastChild && parent.lastChild.nodeType === Node.TEXT_NODE) {
-      parent.lastChild.textContent += text;
-    } else {
-      parent.appendChild(textNode);
-    }
-  }
-  
   async function appendTextNodeAnimated(parent, character, delay) {
     if (parent.lastChild && parent.lastChild.nodeType === Node.TEXT_NODE) {
       parent.lastChild.textContent += character;
@@ -61,24 +53,35 @@ export async function updateContent(imageUrl, title, daemonName, text, delay = 1
     }
     await new Promise((resolve) => setTimeout(resolve, delay));
 }
-  
+
+function hideSpinner() {
+    spinner.style.display = "none";
+    inputForm.disabled = false;
+}
+
+function showSpinner() {
+    userInputText.value = "";
+    sceneText.innerHTML = "";
+    sceneAnswerImgs.innerHTML = "";
+    sceneAnswerQuickReplies.innerHTML = "";
+    inputForm.disabled = true;
+    spinner.style.display = "block";
+}
+
 document.getElementById("user-input-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const user_input = document.getElementById("user-input");
     const currentUser = getCurrentUser();
     console.log(`User ${currentUser.uid} is submitting ${user_input.value}`);
     user_writes(currentUser.uid, user_input.value);
-    user_input.value = "";
-    sceneText.innerHTML = "";
     // Disable input and show spinner
-    inputForm.disabled = true;
-    spinner.style.display = "block";
+    showSpinner();
 });
 
 document.addEventListener("book-event-content-update", async (event) => {
     console.log("book-event-content-update caught:", event.detail);
     // Hide spinner
-    spinner.style.display = "none";
+    hideSpinner();
     sceneAnswerImgs.innerHTML = "";
     sceneAnswerQuickReplies.innerHTML = "";
 
@@ -93,6 +96,7 @@ document.addEventListener("book-event-content-update", async (event) => {
                     button.innerHTML = choice;
                     button.classList.add("answer-button");
                     button.addEventListener("click", () => {
+                        showSpinner();
                         const currentUser = getCurrentUser();
                         console.log(`User ${currentUser.uid} is submitting ${choice}`);
                         user_writes(currentUser.uid, choice);
@@ -108,6 +112,7 @@ document.addEventListener("book-event-content-update", async (event) => {
                 img.alt = choice.image_description;
                 img.classList.add("answer-image");
                 img.addEventListener("click", () => {
+                    showSpinner();
                     const currentUser = getCurrentUser();
                     console.log(`User ${currentUser.uid} is submitting ${choice.image_description}`);
                     user_writes(currentUser.uid, choice.image_description);
