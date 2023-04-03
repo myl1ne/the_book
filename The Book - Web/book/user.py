@@ -6,44 +6,6 @@ class User(FireStoreDocument):
     def __init__(self, id = None):
         FireStoreDocument.__init__(self, 'users', id)
 
-    @staticmethod
-    def getDefaultsOld():
-        return {
-            'name': 'John Doe',
-            'email': 'john@doe.com',
-            'character': {
-                'name': 'John Doe',
-                'description': 'An average Joe',
-                'current_location': 'The Book',
-                'image_url': url_for('static', filename='images/default.jpg'),
-
-                'level': 1,
-                'experience': 0,
-                'next_level': 0,
-
-                'health': 10,
-                'maxHealth': 10,
-
-                'strength': 0,
-                'agility': 0,
-                'intelligence': 0,
-
-                'inventory': [
-                    {'name': 'Inked Feather', 'description': 'A feather with ink.', 'image_url': url_for('static', filename='images/item_inked_feather.png')},
-                    {'name': 'Empty Scroll', 'description': 'An empty scroll', 'image_url': url_for('static', filename='images/item_scroll.png')},
-                ],
-                'quests': [
-                    {
-                        'name': 'The Book', 
-                        'description': 'Learn more about The Book and the secrets it contains.', 
-                        'status': 'In Progress',
-                        'reward': 'Unknown',
-                    },
-                ],
-                'known_locations': ['The Book'],
-            }
-        }
-    
     def getDefaults():
         return {
             'name': 'John Doe',
@@ -69,3 +31,22 @@ class User(FireStoreDocument):
         self.update({
             'character.known_locations': self.getDict()['character']['known_locations'] + [location_id]
         })
+    
+    def getLiteCharacterDict(self):
+        if not self.exists():
+            Log.error(f'User {self.id()} does not exist => Abort')
+            return
+        user = self.getDict()
+        return {
+            'id': user['id'],
+            'current_location': user['current_location'],
+            'character': {
+                'name': user['character']['name'],
+                'description': user['character']['description'],
+                'level': user['character']['level'],
+                'stats': user['character']['stats'],
+                'inventory': user['character']['inventory'],
+                'inner_daemon_id': user['character']['inner_daemon_id'],
+                'known_locations': user['character']['known_locations'],
+            }
+        }

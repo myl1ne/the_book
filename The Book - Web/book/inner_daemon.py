@@ -82,6 +82,7 @@ class InnerDaemon(FireStoreDocument, Generator):
             current_trial = 0
             processed = False
             while not processed and current_trial < max_trials:
+                answer = 'LLM not called yet.'
                 try:
                     (answer, _token_count) = self.ask_large_language_model(messages)
                     json_answer = json.loads(answer)
@@ -137,7 +138,9 @@ class InnerDaemon(FireStoreDocument, Generator):
             # Understand their desires
             Imagine a situation and ask them how they would react.
             The situation should be a pickle about their desires.
-            Propose a list of 3 options, they can pick one or write their own. Do not include the options into the question.
+            Propose a list of 3 options, they can pick one or write their own.
+            Do not include the options into the question.
+            Options must be short strings only.
            
             Use this format for your message: 
             {
@@ -182,7 +185,9 @@ class InnerDaemon(FireStoreDocument, Generator):
             # Understand their <trait>:
             Imagine a situation and ask them how they would react.
             The situation should be a pickle about their sense of <trait>.
-            Propose a list of 3 options, they can pick one or write their own. Do not include the options into the question.
+            Propose a list of 3 options, they can pick one or write their own.
+            Do not include the options into the question.
+            Options must be short strings only.
 
             Use this format for your message: 
             {
@@ -235,20 +240,20 @@ class InnerDaemon(FireStoreDocument, Generator):
                 "payload_type": "CHARACTER_SHEET",
                 "name": "name the player chose for their character",
                 "inner_daemon_name": "choose a name for yourself, inner daemon",
-                "character_visual_description": "description of the character looks",
-                "inner_daemon_visual_description": "description of yourself, inner daemon",
-                "psychology": "what is the character like, what is their personality",
-                "personal_quest": "what does the character want to achieve",
-                "occupation": "occupation of the character",
-                "backstory": "backstory of the character",
+                "character_visual_description": "description of the character looks (10-30 words)",
+                "inner_daemon_visual_description": "description of yourself, inner daemon (10-30 words)",
+                "psychology": "what is the character like, what is their personality (5-20 words)",
+                "personal_quest": "what does the character want to achieve (5-20 words)",
+                "occupation": "occupation of the character (1-5 words)",
+                "backstory": "backstory of the character (10-30 words)",
                 "stats": {
                     "strength": "a number between 0 and 10",
                     "agility": "a number between 0 and 10",
                     "intelligence": "a number between 0 and 10",
                 },
                 "inventory": [
-                    {"name": "item 1 name", "description": "description of item 1"},
-                    {"name": "item 2 name", "description": "description of item 2"},
+                    {"name": "item 1 name", "description": "description of item 1 (<10 words)"},
+                    {"name": "item 2 name", "description": "description of item 2 (<10 words)"},
                     ...
                 ],
             }

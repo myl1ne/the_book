@@ -81,8 +81,8 @@ class Daemon(FireStoreDocument, Generator):
                 enclosed_msg = extract_enclosed_string(update_msg)
                 update_json = json.loads(enclosed_msg)
                 success = True
-            except:
-                Log.error(f'Failed to parse update message: {enclosed_msg}. Retrying...')
+            except Exception as e:
+                Log.error(f'Failed to parse update message: {enclosed_msg}. Exception was: {e} Retrying...')
                 trials += 1
         if (not success):
             Log.error(f'Failed to parse update message {max_trials} times')
@@ -175,7 +175,7 @@ class Daemon(FireStoreDocument, Generator):
         #refresh the dict
         dae_dict = self.getDict()
 
-        #Buffer with the classifcation prompt
+        #Buffer with the classification prompt
         message_classes = [
             ('adventurer_took_exit_path', '(pick this if the adventurer left the current location or entered one of the paths.)'), 
             ('adventurer_took_action_leading_to_narrative', '(pick this if the action led to a narrative event)'),

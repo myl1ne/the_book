@@ -82,7 +82,7 @@ class Book:
             'current_location': location.id()
         })
         user.addKnownLocation(location.id())
-        user_dict = user.getDict()
+        user_dict = user.getLiteCharacterDict()
 
         dae = Daemon(location_dict['daemon'])
         dae.register_events([{"role": "system", "content": Daemon.get_daemon_event_player_arrived(user_dict)}])
@@ -102,7 +102,7 @@ class Book:
     def process_user_write(self, user_id, text):
         Log.info(f'Process write of {user_id}')
         user = User(user_id)
-        user_dict = user.getDict()
+        user_dict = user.getLiteCharacterDict()
 
         location = Location(user_dict['current_location'])
         if not location.exists():
