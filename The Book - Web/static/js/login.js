@@ -27,7 +27,7 @@ function onUserLogin() {
     document.getElementById("logout-form-user-email").textContent = `Logged in as: ${getCurrentUser().email}`;
     document.getElementById("login-form").style.display = "none";
     document.getElementById("logout-form").style.display = "block";
-    document.getElementById("input-container").style.display = "flex";
+    document.getElementById("scene-input").style.display = "flex";
     document.getElementById("icon-container").style.display = "flex";
 }
 
@@ -35,6 +35,6 @@ function onUserLogout() {
     // Hide the logout form and show the login form
     document.getElementById("logout-form").style.display = "none";
     document.getElementById("login-form").style.display = "block";
-    document.getElementById("input-container").style.display = "none";
+    document.getElementById("scene-input").style.display = "none";
     document.getElementById("icon-container").style.display = "none";
 }

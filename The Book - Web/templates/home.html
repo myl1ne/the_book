@@ -17,21 +17,24 @@
     <title>The Book</title>
 </head>
 
-<body>
-    <header>
-        <nav>
+<body>    
+    <main class="custom-scrollbar">
+        
+        <div id="main-header" class="custom-scrollbar">
             <ul>
+                <li>{% include 'login.html' %}</li>
                 <li><a href="/admin/data/clean">Admin: Clean up firestore</a></li>
             </ul>
-        </nav>
-    </header>
-    
-    <main>
-        {% include 'login.html' %}
-        {% include 'io.html' %}
-        {% include 'modals.html' %}
-    </main>
+        </div>
 
+        <div id="main-content" class="custom-scrollbar">
+            {% include 'io.html' %}
+        </div>
+
+        <div id="main-footer">
+            {% include 'modals.html' %}
+        </div>
+    </main>
 </body>
 
 </html>

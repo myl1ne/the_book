@@ -1,0 +1,19 @@
+
+#main-header ul {
+    display: flex;
+    justify-content: flex-end;
+    list-style-type: none;
+}
+
+#main-header ul li {
+    margin-left: 20px;
+}
+
+#main-header ul li a {
+    color: #ddd;
+    text-decoration: none;
+}
+
+#main-header ul li a:hover {
+    color: #aaa;
+}

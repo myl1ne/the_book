@@ -1,13 +1,13 @@
 import { getCurrentUser, user_writes } from "./firebase.js";
 
-const sceneImage = document.getElementById("scene-image");
-const sceneTitle = document.getElementById("scene-title");
-const sceneDaemonName = document.getElementById("scene-daemon-name");
+const sceneImage = document.getElementById("scene-header-image");
+const sceneTitle = document.getElementById("scene-header-title");
+const sceneDaemonName = document.getElementById("scene-header-daemon-name");
 const sceneText = document.getElementById("scene-text");
 const sceneAnswerImgs = document.getElementById("scene-answer-images");
 const sceneAnswerQuickReplies = document.getElementById("scene-answer-quick-replies");
 const spinner = document.getElementById("loading-spinner");
-const inputForm = document.getElementById("user-input-form"); 
+const inputFormContainer = document.getElementById("scene-input"); 
 const userInputText = document.getElementById("user-input");
 
 export async function updateContent(imageUrl, title, daemonName, text, delay = 100) {
@@ -56,7 +56,7 @@ export async function updateContent(imageUrl, title, daemonName, text, delay = 1
 
 function hideSpinner() {
     spinner.style.display = "none";
-    inputForm.disabled = false;
+    inputFormContainer.style.display = "flex";
 }
 
 function showSpinner() {
@@ -64,7 +64,7 @@ function showSpinner() {
     sceneText.innerHTML = "";
     sceneAnswerImgs.innerHTML = "";
     sceneAnswerQuickReplies.innerHTML = "";
-    inputForm.disabled = true;
+    inputFormContainer.style.display = "none";
     spinner.style.display = "block";
 }
 
@@ -133,6 +133,5 @@ document.addEventListener("book-event-content-update", async (event) => {
     await updateContent(event.detail.image_url, event.detail.location_name, event.detail.daemon_name, text, 30);
 
     // Enable input
-    const input = document.getElementById("user-input-form");
-    inputForm.disabled = false;
+    hideSpinner();
   });
