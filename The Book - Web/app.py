@@ -17,12 +17,7 @@ def is_user_in_creation_process(user_id):
     user = User(user_id)
     if user.exists():
         character = user.getDict()['character']
-        inner_daemon = InnerDaemon(character['inner_daemon_id'])
-        inner_daemon_dict = inner_daemon.getDict()
-        if inner_daemon_dict['creation_step'] < len(InnerDaemon.get_daemon_character_creation_steps(inner_daemon.creation_custom_traits_count)):
-            return True
-        else:
-            return False
+        return InnerDaemon(character['inner_daemon_id']).is_user_in_creation_process()
     else:
         raise Exception(f"User {user_id} does not exist")
 

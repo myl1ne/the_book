@@ -8,6 +8,7 @@ from flask import url_for
 import json
 
 class InnerDaemon(FireStoreDocument, Generator):
+
     def __init__(self, id = None):
         FireStoreDocument.__init__(self, 'inner_daemons', id)
         Generator.__init__(self)
@@ -16,7 +17,7 @@ class InnerDaemon(FireStoreDocument, Generator):
         self.base_events_to_trim = 2
         self.base_chats_count = 2
         self.base_chats_to_trim = 2
-        self.creation_custom_traits_count = 1
+        self.config = FireStoreDocument('configurations','inner_daemons').getDict()
 
     @staticmethod
     def getDefaults(name, user_id):
@@ -39,6 +40,12 @@ class InnerDaemon(FireStoreDocument, Generator):
             Log.error(f'Inner Daemon {self.id()} already exists => Abort')
             return
         self.set(InnerDaemon.getDefaults(name, user_id))
+
+    def get_creation_steps_count(self):
+        return len(InnerDaemon.get_daemon_character_creation_steps(self.config['creation_custom_traits_count']))
+
+    def is_user_in_creation_process(self):
+        return self.getDict()['creation_step'] < self.get_creation_steps_count()
 
     #TODO move the trim logic inside the register methods and make them a transaction
     def register_summons(self, summons_messages):
@@ -67,7 +74,7 @@ class InnerDaemon(FireStoreDocument, Generator):
             #We need to add the message to the chat, and then ask the daemon to generate a message
             msgs_to_add = [
                 {"role": "user", "content": text},
-                {"role": "system", "content": InnerDaemon.get_daemon_character_creation_steps(self.creation_custom_traits_count)[daeDict['creation_step']]},   
+                {"role": "system", "content": InnerDaemon.get_daemon_character_creation_steps(self.config['creation_custom_traits_count'])[daeDict['creation_step']]},   
             ]
             messages += msgs_to_add
 
