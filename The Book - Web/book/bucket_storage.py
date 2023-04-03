@@ -15,7 +15,9 @@ class BucketStorage:
     Interface for storing data
     """
     def __init__(self):
-        self.local_root = "./static/images/generated"
+        self.local_root = "./tmp/images/generated/"
+        if not os.path.exists(self.local_root):
+            os.makedirs(self.local_root)
         certificate_path = os.environ.get('THE_BOOK_GOOGLE_APPLICATION_CREDENTIALS')
         if certificate_path != None:
             certificate_path = os.environ.get('THE_BOOK_GOOGLE_APPLICATION_CREDENTIALS')
@@ -38,19 +40,14 @@ class BucketStorage:
         """
         # save the PIL image locally
         file_name = self.generate_unique_filename("png")
-        relative_path = f"static/images/generated/"
-        full_path = self.local_root + relative_path
-        if not os.path.exists(full_path):
-            os.makedirs(full_path)
-        upload_path = full_path + file_name
-        image.save(upload_path)
+        local_path = self.local_root + file_name
+        image.save(local_path)
 
         # now upload the image to firebase
-        image_path = upload_path
         blob = self.__bucket.blob(file_name)
-        blob.upload_from_filename(image_path)
+        blob.upload_from_filename(local_path)
         # delete the local copy
-        os.remove(image_path)
+        os.remove(local_path)
 
         # return the URL of the image
         blob.make_public()
