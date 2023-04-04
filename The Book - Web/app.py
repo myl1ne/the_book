@@ -60,9 +60,13 @@ def user_watch(user_id):
     It either redirect to watching the current location or to the creation process.
     '''
     if is_user_in_creation_process(user_id):
-        return jsonify(app.book.on_creation_step(user_id, text = None))
+        data = app.book.on_creation_step(user_id, text = None)
+        data["creation_process_passed"] = False
+        return jsonify(data)
     else:
-        return jsonify(app.book.get_current_location_for(user_id = user_id))
+        data = app.book.get_current_location_for(user_id = user_id)
+        data["creation_process_passed"] = True
+        return jsonify(data)
 
 @app.route("/users/<user_id>/move_to/<location_id>", methods=["POST"])
 def user_move_to_location(user_id, location_id):
@@ -77,6 +81,7 @@ def user_move_to_location(user_id, location_id):
                 "location_name": "CrashTown",
                 "image_url": url_for('static', '/images/boo_exception.png'),
             }
+    data["creation_process_passed"] = True
     return jsonify(data)
 
 @app.route("/users/<user_id>/write", methods=["POST"])
@@ -85,6 +90,7 @@ def user_write(user_id):
     text = data["text"]
     if is_user_in_creation_process(user_id):
         response_data = app.book.on_creation_step(user_id, text = text)
+        response_data["creation_process_passed"] = False
     else:
         try:
             response_data = app.book.process_user_write(user_id = user_id, text = text)
@@ -97,6 +103,7 @@ def user_write(user_id):
                 "location_name": "CrashTown",
                 "image_url": url_for('static', '/images/boo_exception.png'),
             }
+        response_data["creation_process_passed"] = True
     return jsonify(response_data)
 
 #------------------------------------------------------------------------------------------------------------------#

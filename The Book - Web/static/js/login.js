@@ -28,7 +28,6 @@ function onUserLogin() {
     document.getElementById("login-form").style.display = "none";
     document.getElementById("logout-form").style.display = "block";
     document.getElementById("scene-input").style.display = "flex";
-    document.getElementById("icon-container").style.display = "flex";
 }
 
 function onUserLogout() {

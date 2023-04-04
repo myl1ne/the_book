@@ -1,4 +1,5 @@
 import { getCurrentUser, user_writes } from "./firebase.js";
+import { attractAttention } from "./effects.js";
 
 const sceneImage = document.getElementById("scene-header-image");
 const sceneTitle = document.getElementById("scene-header-title");
@@ -117,6 +118,13 @@ document.addEventListener("book-event-content-update", async (event) => {
     sceneAnswerImgs.innerHTML = "";
     sceneAnswerQuickReplies.innerHTML = "";
 
+    // Check if we need the icons
+    if (event.detail.creation_process_passed) {
+        document.getElementById("icon-container").style.display = "flex";
+        attractAttention("icon-container", "shadow");
+    } else {
+        document.getElementById("icon-container").style.display = "none";
+    }
     // Parse daemon message
     let text = "";
     if (typeof event.detail.daemon_message === 'object') {
