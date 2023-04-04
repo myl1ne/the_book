@@ -66,7 +66,17 @@ def user_watch(user_id):
 
 @app.route("/users/<user_id>/move_to/<location_id>", methods=["POST"])
 def user_move_to_location(user_id, location_id):
-    data = app.book.move_character_to_location(user_id = user_id, location_id = location_id)
+    try:
+        data = app.book.move_character_to_location(user_id = user_id, location_id = location_id)
+    except Exception as e:
+        data = {
+                "status": "error",
+                "type": "handling-error",
+                "daemon_message": f"The daemon speaks in tongues, you do not understand... {str(e)}",
+                "daemon_name": type(e).__name__,
+                "location_name": "CrashTown",
+                "image_url": url_for('static', '/images/boo_exception.png'),
+            }
     return jsonify(data)
 
 @app.route("/users/<user_id>/write", methods=["POST"])
@@ -76,7 +86,17 @@ def user_write(user_id):
     if is_user_in_creation_process(user_id):
         response_data = app.book.on_creation_step(user_id, text = text)
     else:
-        response_data = app.book.process_user_write(user_id = user_id, text = text)
+        try:
+            response_data = app.book.process_user_write(user_id = user_id, text = text)
+        except Exception as e:
+            response_data = {
+                "status": "error",
+                "type": "handling-error",
+                "daemon_message": f"The daemon speaks in tongues, you do not understand... {str(e)}",
+                "daemon_name": type(e).__name__,
+                "location_name": "CrashTown",
+                "image_url": url_for('static', '/images/boo_exception.png'),
+            }
     return jsonify(response_data)
 
 #------------------------------------------------------------------------------------------------------------------#

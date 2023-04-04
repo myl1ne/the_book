@@ -376,7 +376,7 @@ class Daemon(FireStoreDocument, Generator):
 def try_to_parse_json(text):
     try:
         return json5.loads(text)
-    except json5.decoder.JSONDecodeError as e:
+    except Exception as e:
         Log.error(f'Could not parse json: {text} with error: {e}')
         raise e
 
