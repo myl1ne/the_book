@@ -237,7 +237,7 @@ class Daemon(FireStoreDocument, Generator):
         #Register the answer / clean up the history
         if (token_count > self.trim_if_above_token):
             del chats[self.base_chats_count:self.base_chats_count+self.base_chats_to_trim]
-            self.update({f'messages.chat.{user_dict["id"]}': chats+evt})
+            self.update({f'messages.chats.{user_dict["id"]}': chats+evt})
         else:
             self.register_summons(user_dict['id'],evt)
         Log.info(f'Processed write of {user_dict["id"]} ==> {answer}')
