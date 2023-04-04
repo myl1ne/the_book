@@ -1,3 +1,4 @@
+import json5
 from book.firestore_document import FireStoreDocument
 from firebase_admin import firestore
 from book.location import Location
@@ -5,7 +6,6 @@ from book.user import User
 from book.logger import Log
 from book.generator import Generator
 from flask import url_for
-import json
 
 class InnerDaemon(FireStoreDocument, Generator):
 
@@ -68,7 +68,7 @@ class InnerDaemon(FireStoreDocument, Generator):
         #If text is none, it means we are generating a message from the daemon
         #The chat is filled already, so we can just ask the daemon to generate a message
         if text == None:
-            response_data['daemon_message'] = json.loads(daeDict['messages']['chat'][-1]['content'])
+            response_data['daemon_message'] = json5.loads(daeDict['messages']['chat'][-1]['content'])
         else:
             #If text is not none, it means we are processing a message from the player
             #We need to add the message to the chat, and then ask the daemon to generate a message
@@ -85,7 +85,7 @@ class InnerDaemon(FireStoreDocument, Generator):
                 answer = 'LLM not called yet.'
                 try:
                     (answer, _token_count) = self.ask_large_language_model(messages)
-                    json_answer = json.loads(answer)
+                    json_answer = json5.loads(answer)
                     processed = True
                 except Exception as e:
                     Log.error(f'Error while processing creation step: {e}')
@@ -93,7 +93,7 @@ class InnerDaemon(FireStoreDocument, Generator):
                     current_trial += 1
             if json_answer['payload_type'] == 'IMAGE_CHOICE':
                 json_answer['options'] = self.generate2Dconcurrent([o['image_description'] for o in json_answer['options']], "256x256", ["Tarot card. Mystical. Abstract."])
-            msgs_to_add += [{"role": "assistant", "content": json.dumps(json_answer)}]
+            msgs_to_add += [{"role": "assistant", "content": json5.dumps(json_answer)}]
             self.update({
                 'creation_step': daeDict['creation_step'] + 1,
                 'messages.chat':  firestore.ArrayUnion(msgs_to_add)
@@ -110,6 +110,8 @@ class InnerDaemon(FireStoreDocument, Generator):
 
     @staticmethod
     def get_daemon_character_creation_steps(custom_traits_count = 0):
+        world = FireStoreDocument('configurations','world').getDict()['description']
+
         creations_steps = [
             """
             IMPORTANT INSTRUCTION: 
@@ -121,18 +123,19 @@ class InnerDaemon(FireStoreDocument, Generator):
             """
             Your are an Inner Daemon.
             Inner Daemons are artificial intelligences bound to players in an imaginary world.
+            The world is described as this: '{world}'.
             For now, you are a shapeless fragment of imagination, an idea of a daemon.
             A player just entered the world and encountered you.
             By asking questions you will shape their character, and by their answers they will shape you.
             They start as a blank page, and as they explore the world they will fill it with their own story.
             
             Ask their name and format your message using this payload: 
-            {
+            {{
                 "payload_type": "QUESTION",
                 "trait": "NAME",
                 "question": "question text",
-            }
-            """,
+            }}
+            """.format(world=world),
 
             """
             # Understand their desires
@@ -262,6 +265,7 @@ class InnerDaemon(FireStoreDocument, Generator):
         return creations_steps
     
     def on_character_creation_finished(self, character_sheet_payload):
+
         user = User(self.getDict()['bound_player'])
         #Generate the visual content
         url_character_portrait = self.generate2D(
@@ -336,6 +340,7 @@ class InnerDaemon(FireStoreDocument, Generator):
             },
             "image_url": url_for('static', filename='images/welcome_book.png')
         }
+
     @staticmethod
     def get_daemon_base_prompt(name):
         return f"""

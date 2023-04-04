@@ -60,27 +60,9 @@ scene-interactive-content contains two sections scene-text scene-input*/
     font-size: 20px;
     color: #ddd;
     white-space: pre-wrap;
-    text-align: center;
+    text-align: justify;
     height: 100%;
     overflow-y: auto;
-}
-
-dialog {
-    display: inline;
-    font-family: 'Courier', monospace;
-    font-size: 18px;
-    color: #004f00;
-    background-color: transparent;
-    border: none;
-}
-
-narrative {
-    display: inline;
-    font-family: 'Courier', monospace;
-    font-size: 18px;
-    color: #5a7201;
-    background-color: transparent;
-    border: none;
 }
 
 /* Inputs are made of a text area, images and quickl replies  */
@@ -215,4 +197,42 @@ narrative {
 
 #submit-input:hover {
     background-color: #666;
+}
+
+@keyframes fadeIn {
+0% {
+    opacity: 0;
+}
+100% {
+    opacity: 1;
+}
+}
+
+.fade-in {
+animation: fadeIn 0.15s forwards;
+display: inline;
+}
+
+.dialog {
+    color: #ffa726;
+    font-style: italic;
+}
+
+.narrative {
+    color: #5a7201;
+}
+
+.inventory-update {
+    color: #00bcd4;
+    font-weight: bold;
+}
+
+.location-update {
+    color: #f48fb1;
+    font-weight: bold;
+}
+
+.handling-error {
+    color: #c42020;
+    font-weight: bold;
 }

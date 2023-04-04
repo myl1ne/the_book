@@ -10,7 +10,7 @@ const spinner = document.getElementById("loading-spinner");
 const inputFormContainer = document.getElementById("scene-input"); 
 const userInputText = document.getElementById("user-input");
 
-export async function updateContent(imageUrl, title, daemonName, text, delay = 100) {
+export async function updateContent(imageUrl, title, daemonName, text, textType, delay = 100) {
     sceneImage.src = imageUrl;
     sceneTitle.innerHTML = title;
     sceneDaemonName.innerHTML = daemonName;
@@ -19,6 +19,7 @@ export async function updateContent(imageUrl, title, daemonName, text, delay = 1
     let currentTag = "";
     let currentText = "";
     let currentElement = sceneText;
+    let wordElement;
   
     for (const character of text) {
       if (character === "<") {
@@ -39,21 +40,52 @@ export async function updateContent(imageUrl, title, daemonName, text, delay = 1
       } else if (currentTag) {
         currentTag += character;
       } else {
-        currentText += character;
-        await appendTextNodeAnimated(currentElement, character, delay);
+        if (character === " " || character === "\n") {
+          if (wordElement) {
+            await fadeInWord(wordElement, delay);
+          }
+          wordElement = document.createElement("span");
+          sceneText.appendChild(wordElement);
+          wordElement.classList.add("fade-in");
+          wordElement.classList.add(textType);
+          appendTextNode(wordElement, character);
+        } else {
+          currentText += character;
+          if (!wordElement) {
+            wordElement = document.createElement("span");
+            sceneText.appendChild(wordElement);
+            wordElement.classList.add("fade-in");
+            wordElement.classList.add(textType);
+          }
+          appendTextNode(wordElement, character);
+        }
       }
+    }
+    if (wordElement) {
+      await fadeInWord(wordElement, delay);
     }
   }
   
-  async function appendTextNodeAnimated(parent, character, delay) {
+  function appendTextNode(parent, character) {
     if (parent.lastChild && parent.lastChild.nodeType === Node.TEXT_NODE) {
       parent.lastChild.textContent += character;
     } else {
       parent.appendChild(document.createTextNode(character));
     }
-    await new Promise((resolve) => setTimeout(resolve, delay));
-}
-
+  }
+  
+  function fadeInWord(wordElement, delay) {
+    return new Promise((resolve) => {
+      wordElement.addEventListener("animationend", () => {
+        wordElement.classList.remove("fade-in");
+        resolve();
+      }, { once: true });
+  
+      setTimeout(() => {
+        wordElement.style.animationDelay = "0s";
+      }, delay);
+    });
+  }
 function hideSpinner() {
     spinner.style.display = "none";
     inputFormContainer.style.display = "flex";
@@ -129,8 +161,8 @@ document.addEventListener("book-event-content-update", async (event) => {
         console.error("Unknown daemon message type:", typeof event.detail.daemon_message);
         text = "The daemon speaks in tongues.";
     }
-    //Show typewriter content
-    await updateContent(event.detail.image_url, event.detail.location_name, event.detail.daemon_name, text, 30);
+
+    await updateContent(event.detail.image_url, event.detail.location_name, event.detail.daemon_name, text, event.detail.type??"", 10);
 
     // Enable input
     hideSpinner();

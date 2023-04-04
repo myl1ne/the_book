@@ -61,7 +61,7 @@ class Book:
         dae = Daemon(location_dict['daemon'])
         response_data = {
             "status": "success",
-            "type": "User observing current location",
+            "type": "narrative",
             "daemon_name": dae.getDict()['name'],
             "location_name": location_dict['name'],
             "daemon_message": location_dict['description'],
@@ -91,8 +91,8 @@ class Book:
         Log.info(f'Moving user {user_id} to {location_id} ==> {greetings}')
         response_data = {
             "status": "success",
-            "type": "User moved to location",
-            "daemon_message": greetings,
+            "type": "narrative",
+            "daemon_message": f"You just entered {location_dict['name']}\n"+greetings,
             "daemon_name": dae.getDict()['name'],
             "location_name": location_dict['name'],
             "image_url": location_dict['image_url']
@@ -120,7 +120,7 @@ class Book:
         if answer['classification'] == 'adventurer_took_action_leading_to_narrative':   
             response_data = {
                 "status": "success",
-                "type": "User wrote something",
+                "type": "narrative",
                 "daemon_message": answer['daemon_answer'],
                 "daemon_name": dae_dict['name'],
                 "location_name": location_dict['name'],
@@ -131,7 +131,7 @@ class Book:
         if answer['classification'] == 'adventurer_took_action_leading_to_dialog':   
             response_data = {
                 "status": "success",
-                "type": "User wrote something",
+                "type": "dialog",
                 "daemon_message": answer['daemon_answer'],
                 "daemon_name": dae_dict['name'],
                 "location_name": location_dict['name'],
@@ -142,7 +142,7 @@ class Book:
         if answer['classification'] == 'adventurer_took_action_leading_to_location_update':   
             response_data = {
                 "status": "success",
-                "type": "User wrote something",
+                "type": "location-update",
                 "daemon_message": answer['update_json']['change'],
                 "daemon_name": dae_dict['name'],
                 "location_name": location_dict['name'],
@@ -153,7 +153,7 @@ class Book:
         if answer['classification'] == 'adventurer_took_action_leading_inventory_update':   
             response_data = {
                 "status": "success",
-                "type": "User wrote something",
+                "type": "inventory-update",
                 "daemon_message": answer['update_json']['change'],
                 "daemon_name": dae_dict['name'],
                 "location_name": location_dict['name'],
@@ -163,7 +163,7 @@ class Book:
 
         return {
                 "status": "success",
-                "type": "User wrote something",
+                "type": "handling-error",
                 "daemon_message": f"The daemon speaks in tongues, maybe you can understand: {answer['daemon_answer']}",
                 "daemon_name": dae_dict['name'],
                 "location_name": location_dict['name'],
