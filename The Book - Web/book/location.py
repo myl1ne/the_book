@@ -11,13 +11,25 @@ class Location(FireStoreDocument):
     def getDefaults(loc_id):
         return {
             'name': loc_id,
-            'description': 'Unknown',
+            'description': '<a description of the place (less than 30 words)>',
             'image_url': url_for('static', filename='images/default.jpg'),
             'exit_paths':[
-                {'description':'A door.','destination_id':FireStoreDocument.getNewId('locations')}
+                {
+                    'description':'<a description of what the exit looks like (less than 10 words)>',
+                    'destination_id':'<the name of the place this exit leads to (1-3 words)>'
+                }
+            ],
+            'NPCs':[
+                {
+                    'name':'<the name of a non playable character', 
+                    'description':'<description of the character. (less than 10 words)>',
+                }
             ],
             'pickable_objects':[
-                {'name':'Rusty Key', 'description':'An old metal key.'}
+                {
+                    'name':'<the name of an object', 
+                    'description':'<description of the object. (less than 10 words)>'
+                }
             ],
             'daemon':FireStoreDocument.getNewId('daemons')
         }

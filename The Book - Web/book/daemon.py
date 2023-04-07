@@ -180,7 +180,7 @@ class Daemon(FireStoreDocument, Generator):
             ('adventurer_took_exit_path', '(pick this if the action led to leaving the current place. Only if the user was able to leave the place through a path. Else pick dialog until they found a way.)'), 
             ('adventurer_took_action_leading_to_narrative', '(pick this if the action led to a narrative event in the same location)'),
             ('adventurer_took_action_leading_inventory_update', '(pick this if the action affected the state of the inventory)'), 
-            ('adventurer_took_action_leading_to_dialog', '(pick this if the action led to a verbal answer from the daemon)'),
+            ('adventurer_took_action_leading_to_dialog', '(pick this if the action led to a verbal answer from you or a NPC)'),
             ('adventurer_took_action_leading_to_location_update', '(pick this if the action affected the state of the location)'),
         ]
         chats = dae_dict['messages']['chats'][user_dict['id']]
@@ -324,8 +324,10 @@ class Daemon(FireStoreDocument, Generator):
         })
         return f"""
         As the game master, you can give and take from player.
-        You must update the player document because: {reason_for_updating}.
-        Here is its current document: {user_dict}.
+        Here is their current document: {user_dict}.
+        You must update the player document to follow this action: 
+        {reason_for_updating}.
+        
         Please return a document with any adjustments you'd like to make.
         Remember a few rules:
         - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
@@ -343,12 +345,21 @@ class Daemon(FireStoreDocument, Generator):
         Write the narrative unfolding from the actions of the player.
         Be descriptive and use the third person for all characters, including yourself and the player.
         Don't write any spoken dialog.
+        Do not describe the player picking up items.
         """
 
     @staticmethod
     def get_daemon_event_player_text_answer_with_dialog():
         return """
-        Write the text you want to send to the player without any narrative description.
+        Write the lines you and/or the present NPCs want to say.
+        Keep it short (2/3 lines).
+        DO NOT IMPERSONATE THE PLAYER.
+
+        Here is an example:
+        '
+        <your name>: What is the answer, you ask? Do you at least know the question?\n
+        <npc name>: I heard from a rat it could be 42... *winks*\n
+        '
         """
     
     @staticmethod
@@ -364,11 +375,10 @@ class Daemon(FireStoreDocument, Generator):
         Please return a document with any adjustments you'd like to make.
         Remember a few rules:
         - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
-        - your main task is to update the description, exits and items
-        - you can add or remove paths, but there should always be at least 1
-        - the destination_id of a path should be less than 3 words, ideally 1
-        - if any destination_id is an unreadable UID, replace it with a name for a location that could be connected to yours.
-        
+        - your main task is to update the description, NPCs, exits and items
+        - there should always be at least 1 one exit path
+        - keep the exits, NPCs and objects count small, 1-3 of each is a good number
+
         Use the following format:
         {format}
         """
