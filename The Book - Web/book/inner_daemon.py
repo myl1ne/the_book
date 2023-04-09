@@ -118,6 +118,7 @@ class InnerDaemon(FireStoreDocument, Generator):
             You answers will be parsed as JSON objects.
             You must format all your messages carefully.
             The format will be given in the instructions for each step.
+            If you can, phrase your question as a follow-up to the previous one.
             """,
 
             """

@@ -48,5 +48,6 @@ class User(FireStoreDocument):
                 'inventory': user['character']['inventory'],
                 'inner_daemon_id': user['character']['inner_daemon_id'],
                 'known_locations': user['character']['known_locations'],
+                'quests': user['character']['quests'],
             }
         }

@@ -159,8 +159,18 @@ class Book:
                 "location_name": location_dict['name'],
                 "image_url": location_dict['image_url']
             }
-            return response_data        
-
+            return response_data   
+             
+        if answer['classification'] == 'adventurer_took_action_leading_to_quest_update':   
+            response_data = {
+                "status": "success",
+                "type": "quest-update",
+                "daemon_message": answer['update_json']['change'],
+                "daemon_name": dae_dict['name'],
+                "location_name": location_dict['name'],
+                "image_url": location_dict['image_url']
+            }
+            return response_data    
         return {
                 "status": "success",
                 "type": "handling-error",

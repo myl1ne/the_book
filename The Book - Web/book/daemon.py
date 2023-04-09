@@ -66,6 +66,56 @@ class Daemon(FireStoreDocument, Generator):
         (greetings, _token_count) = self.ask_large_language_model(messages)
         return greetings                
 
+    def update_player_quests(self, user_dict, reason_for_updating):
+        dae_dict = self.getDict()
+
+        events = dae_dict['messages']['events']
+        events += [{"role": "system", "content": Daemon.get_daemon_event_player_text_update_player_quests(user_dict, reason_for_updating)}]
+
+        trials = 0
+        max_trials = 3
+        success = False
+        while (not success and trials < max_trials):
+            try:
+                (update_msg, token_count) = self.ask_large_language_model(events)
+                update_json = try_to_parse_json(update_msg)
+                success = True
+            except Exception as e:
+                Log.error(f'Failed to parse update message: {update_msg}. Exception was: {e} Retrying...')
+                trials += 1
+        if (not success):
+            Log.error(f'Failed to parse update message {max_trials} times')
+            raise Exception(f'Failed to parse update message: {update_msg}')
+        
+        Log.info(f"Updating inventory of {user_dict['character']['name']} with changes {update_msg}")
+        
+        #Generate the new image URL
+        for item in update_json['updated_player']['character']['inventory']:
+            if (item.get('image_url','NULL') == 'NULL'):
+             item['image_url'] = self.generate2D(item['description'])
+
+        #Update the inventory in player's doc
+        user = User(user_dict['id'])
+        user.update({
+            'character.inventory':update_json['updated_player']['character']['inventory'],
+            'character.quests':update_json['updated_player']['character']['quests'],
+        })
+        
+        #TODO
+        Log.error(f"TODO: handled the awarded experience: {update_json['updated_player']['character']['experience']}")
+
+        #Add to the daemon history & trim if needed
+        evt = {"role": "system", "content": f"You updated the player inventory with: '{update_json['change']}'"}
+        if (token_count > self.trim_if_above_token):
+            del events[self.base_events_count:self.base_events_count+self.base_events_to_trim]
+            self.update({
+                'messages.events':events+[evt]
+            })
+        else:
+            self.register_events([evt])
+
+        return update_json
+
     def update_player_inventory(self, user_dict, reason_for_updating):
         dae_dict = self.getDict()
 
@@ -176,15 +226,41 @@ class Daemon(FireStoreDocument, Generator):
         dae_dict = self.getDict()
 
         #Buffer with the classification prompt
-        message_classes = [
-            ('adventurer_took_exit_path', '(pick this if the action led to leaving the current place. Only if the user was able to leave the place through a path. Else pick dialog until they found a way.)'), 
-            ('adventurer_took_action_leading_to_narrative', '(pick this if the action led to a narrative event in the same location)'),
-            ('adventurer_took_action_leading_inventory_update', '(pick this if the action affected the state of the inventory)'), 
-            ('adventurer_took_action_leading_to_dialog', '(pick this if the action led to a verbal answer from you or a NPC)'),
-            ('adventurer_took_action_leading_to_location_update', '(pick this if the action affected the state of the location)'),
+        action_types = [
+            {
+                "type": "adventurer_took_exit_path",
+                "daemon_hint": "(pick this if the action led to leaving the current place. Only if the user was able to leave the place through a path. Else pick narrative/dialog until they found a way.)",
+                "handler": self.handle_action_adventurer_took_exit_path
+            },
+                        {
+                "type": "adventurer_took_action_leading_to_narrative",
+                "daemon_hint": "(pick this if the action led to a narrative event in the same location)",
+                "handler": self.handle_action_leading_to_narrative,
+            },
+            {
+                "type": "adventurer_took_action_leading_to_dialog",
+                "daemon_hint": "(pick this if the action led to a verbal answer from you or a NPC)",
+                "handler": self.handle_action_leading_to_dialog,
+            },
+            {
+                "type": "adventurer_took_action_leading_inventory_update",
+                "daemon_hint": "(pick this if the action affected the state of the inventory)",
+                "handler": self.handle_action_leading_inventory_update,
+            },
+            {
+                "type": "adventurer_took_action_leading_to_location_update",
+                "daemon_hint": "(pick this if the action affected the state of the location)",
+                "handler": self.handle_action_leading_to_location_update,
+            },
+            {
+                "type": "adventurer_took_action_leading_to_quest_update",
+                "daemon_hint": "(pick this if the action affected the state of the character's quest log)",
+                "handler": self.handle_action_leading_to_quest_update,
+            },
         ]
+
         chats = dae_dict['messages']['chats'][user_dict['id']]
-        messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_classification(classes=message_classes)}]
+        messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_classification(classes=action_types)}]
         (answer, token_count) = self.ask_large_language_model(messages_buff)
 
         #execute the action
@@ -193,46 +269,16 @@ class Daemon(FireStoreDocument, Generator):
                 "daemon_answer": answer,
         }
         evt = [{"role": "system", "content": "You processed the message as: " + json5.dumps(answer_data)}]
-        if 'adventurer_took_exit_path' in answer:
-            messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_get_destination()}]
-            (answer_data, token_count) = self.ask_large_language_model(messages_buff)
-            answer_data = {
-                'classification': 'adventurer_took_exit_path',
-                'destination_id': answer_data,
-            }
-            evt = [{"role": "assistant", "content": "I send you to " + answer_data['destination_id']}]
-
-        if 'adventurer_took_action_leading_to_narrative' in answer:            
-            messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_answer_with_narrative()}]
-            (answer_data, token_count) = self.ask_large_language_model(messages_buff)
-            answer_data = {
-                'classification': 'adventurer_took_action_leading_to_narrative',
-                'daemon_answer': answer_data,
-            }
-            evt = [{"role": "assistant", "content": answer_data['daemon_answer']}]
-
-        if 'adventurer_took_action_leading_inventory_update' in answer:            
-            answer_data = {
-                "classification": "adventurer_took_action_leading_inventory_update",
-                "update_json": self.update_player_inventory(user_dict=user_dict, reason_for_updating="Adventurer wrote:'{text}'"),
-            }
-            evt = [{"role": "assistant", "content": answer_data['update_json']['change']}]
-
-        if 'adventurer_took_action_leading_to_dialog' in answer:            
-            messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_answer_with_dialog()}]
-            (answer_data, token_count) = self.ask_large_language_model(messages_buff)
-            answer_data = {
-                'classification': 'adventurer_took_action_leading_to_dialog',
-                'daemon_answer': answer_data,
-            }
-            evt = [{"role": "assistant", "content": answer_data['daemon_answer']}]
-
-        if 'adventurer_took_action_leading_to_location_update' in answer:            
-            answer_data = {
-                "classification": "adventurer_took_action_leading_to_location_update",
-                "update_json": self.update_location(reason_for_updating="Adventurer wrote:'{text}'"),
-            }
-            evt = [{"role": "assistant", "content": answer_data['update_json']['change']}]
+       
+        for action_type in action_types:
+            if action_type["type"] in answer:
+                Log.info(f'Handling action as {action_type["type"]}')
+                handler = action_type["handler"]
+                (answer_data, evt) = handler(chats, user_dict, text)
+                break
+        else:
+            Log.info(f'No action handler found for {answer} defaulting to dialog')
+            (answer_data, evt) = self.handle_action_leading_to_dialog(chats, user_dict, text)
 
         #Register the answer / clean up the history
         if (token_count > self.trim_if_above_token):
@@ -243,6 +289,60 @@ class Daemon(FireStoreDocument, Generator):
         Log.info(f'Processed write of {user_dict["id"]} ==> {answer}')
 
         return answer_data
+
+    def handle_action_adventurer_took_exit_path(self, chats, user_dict, text):
+        messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_get_destination()}]
+        (answer_data, token_count) = self.ask_large_language_model(messages_buff)
+        answer_data = {
+            'classification': 'adventurer_took_exit_path',
+            'destination_id': answer_data,
+        }
+        evt = [{"role": "assistant", "content": "I send you to " + answer_data['destination_id']}]
+        return (answer_data, evt)
+    
+    def handle_action_leading_to_narrative(self, chats, user_dict, text):
+        messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_answer_with_narrative()}]
+        (answer_data, token_count) = self.ask_large_language_model(messages_buff)
+        answer_data = {
+            'classification': 'adventurer_took_action_leading_to_narrative',
+            'daemon_answer': answer_data,
+        }
+        evt = [{"role": "assistant", "content": answer_data['daemon_answer']}]
+        return (answer_data, evt)
+
+    def handle_action_leading_to_dialog(self, chats, user_dict, text):
+        messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_answer_with_dialog()}]
+        (answer_data, token_count) = self.ask_large_language_model(messages_buff)
+        answer_data = {
+            'classification': 'adventurer_took_action_leading_to_dialog',
+            'daemon_answer': answer_data,
+        }
+        evt = [{"role": "assistant", "content": answer_data['daemon_answer']}]
+        return (answer_data, evt)
+
+    def handle_action_leading_inventory_update(self, chats, user_dict, text):
+        answer_data = {
+            "classification": "adventurer_took_action_leading_inventory_update",
+            "update_json": self.update_player_inventory(user_dict=user_dict, reason_for_updating="Adventurer wrote:'{text}'"),
+        }
+        evt = [{"role": "assistant", "content": answer_data['update_json']['change']}]
+        return (answer_data, evt)
+
+    def handle_action_leading_to_location_update(self, chats, user_dict, text):
+        answer_data = {
+            "classification": "adventurer_took_action_leading_to_location_update",
+            "update_json": self.update_location(reason_for_updating="Adventurer wrote:'{text}'"),
+        }
+        evt = [{"role": "assistant", "content": answer_data['update_json']['change']}]
+        return (answer_data, evt)
+
+    def handle_action_leading_to_quest_update(self, chats, user_dict):
+        answer_data = {
+            "classification": "adventurer_took_action_leading_inventory_update",
+            "update_json": self.update_player_quests(user_dict=user_dict, reason_for_updating="Adventurer wrote:'{text}'"),
+        }
+        evt = [{"role": "assistant", "content": answer_data['update_json']['change']}]
+        return (answer_data, evt)
 
     @staticmethod
     def get_daemon_base_prompt(name):
@@ -303,7 +403,7 @@ class Daemon(FireStoreDocument, Generator):
 
     @staticmethod
     def get_daemon_event_player_text_classification(classes):
-        classes_str = '\n'.join([f'{item[0]} {item[1]}' for item in classes])
+        classes_str = '\n'.join([f'{item["type"]} {item["daemon_hint"]}' for item in classes])
 
         return f"""
         Your task is to classify the text you just received.
@@ -316,6 +416,7 @@ class Daemon(FireStoreDocument, Generator):
         return """
         Return the id of the location where the adventurer should be sent.
         Return ONLY THE ID, without any other text or explanation.
+        For example, if you want to send the adventurer to the location named "The Halls", return "The Halls".
         """
     
     @staticmethod
@@ -340,7 +441,34 @@ class Daemon(FireStoreDocument, Generator):
         Use the following format:
         {format}
         """
-
+    
+    @staticmethod
+    def get_daemon_event_player_text_update_player_quests(user_dict, reason_for_updating):
+        format = json5.dumps({
+            'change':'A narrative description of what changed and how. (do not mention the experience)',
+            'awarded_experience': 'An integer representing the amount of experience awarded to the player. (between 0 and 100)',
+            'updated_player': user_dict
+        })
+        return f"""
+        As the game master, you can resolve the quests from player.
+        Here is their current document: {user_dict}.
+        You must update the player document following this action: 
+        {reason_for_updating}.
+        
+        Please return a document with any adjustments you'd like to make.
+        Remember a few rules:
+        - DO NOT MODIFY THE KEYS OF THE JSON STRUCTURE, only the values
+        - you can update the quests status and description (not their name) and the inventory content. Nothing else.
+        - a quest status can be: 'In Progress', 'Completed', 'Failed'
+        - for experience, you return it in the awarded_experience field, not in the updated_player document, it will be updated automatically.
+        - experience is awarded only if the quest is completed, not if it is failed or simply updated.
+        - you can add, remove or alter the description of inventory items
+        - if you add or alter an item of the inventory, set its image_url to "NULL", it will be updated automatically
+        
+        Use the following format:
+        {format}
+        """
+    
     @staticmethod
     def get_daemon_event_player_text_answer_with_narrative():
         return """
@@ -388,6 +516,9 @@ class Daemon(FireStoreDocument, Generator):
         """
 
 def try_to_parse_json(text):
+    # Common mistake is to have a "." at the end of the json
+    if text[-1] == '.':
+        text = text[:-1]
     try:
         return json5.loads(text)
     except Exception as e:
