@@ -10,6 +10,7 @@ const sceneAnswerQuickReplies = document.getElementById("scene-answer-quick-repl
 const spinner = document.getElementById("loading-spinner");
 const inputFormContainer = document.getElementById("scene-input"); 
 const userInputText = document.getElementById("user-input");
+const suggestionsBox = document.getElementById("autocomplete-suggestions");
 
 export async function updateContent(imageUrl, title, daemonName, text, textType, delay = 100) {
     sceneImage.src = imageUrl;
@@ -174,4 +175,42 @@ document.addEventListener("book-event-content-update", async (event) => {
 
     // Enable input
     hideSpinner();
-  });
+});
+  
+
+//Autocomplete logic
+userInputText.addEventListener("keyup", autocomplete);
+const availableCommands = [
+    "@help",
+    "@inventory",
+    "@look",
+    "@move",
+    "@pickup",
+    "@use",
+];
+
+export function autocomplete(e) {
+    const input = e.target;
+
+    if (input.value[0] === "@" && input.value.length > 1) {
+        const search = input.value.substring(1).toLowerCase();
+        const suggestions = availableCommands.filter(
+            (command) => command.toLowerCase().indexOf(search) === 1
+        );
+
+        suggestionsBox.innerHTML = "";
+        suggestionsBox.style.display = "block";
+        suggestions.forEach((suggestion) => {
+            const item = document.createElement("div");
+            item.classList.add("suggestion-item");
+            item.textContent = suggestion;
+            item.onclick = function () {
+                input.value = suggestion;
+                suggestionsBox.style.display = "none";
+            };
+            suggestionsBox.appendChild(item);
+        });
+    } else {
+        suggestionsBox.style.display = "none";
+    }
+}
