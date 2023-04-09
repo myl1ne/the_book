@@ -25,6 +25,7 @@ scene-interactive-content contains two sections scene-text scene-input*/
     display: grid;
     grid-template-rows: auto 1fr auto;
     align-items: center;
+    justify-content: center;
     vertical-align: bottom;
     width: 100%;
     height: 100%;

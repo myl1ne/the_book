@@ -15,6 +15,10 @@
     <script type="module" src="{{ url_for('static', filename='js/firebase.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/effects.js') }}"></script>
 
+    <script type="module" src="{{ url_for('static', filename='js/login.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/modals.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/io.js') }}"></script>
+    
     <title>The Book</title>
 </head>
 
@@ -23,17 +27,84 @@
         
         <div id="main-header" class="custom-scrollbar">
             <ul>
-                <li>{% include 'login.html' %}</li>
+                <li>
+                    <form id="logout-form" style="display:none;">
+                        <label id="logout-form-user-email"></label>
+                        <button type="submit">Log out</button>
+                    </form>
+                </li>
                 <li><a href="/admin/data/clean">Admin: Clean up firestore</a></li>
+                <li><a href="/admin/data/populate_world">Admin: populate world</a></li>
             </ul>
         </div>
 
         <div id="main-content" class="custom-scrollbar">
-            {% include 'io.html' %}
+            <div id="scene-header">
+                <img id="scene-header-image" src="{{ url_for('static', filename='images/welcome_book.png') }}" alt="Scene" />
+                <div id="scene-header-title">
+                    The Book
+                </div>    
+                <div id="scene-header-daemon-name">
+                    by Enoch
+                </div>
+            </div>
+            
+            <div id="scene-interactive-content" class="custom-scrollbar">
+                <form id="login-form">
+                    <p>State your credentials, adventurer. If they don't exist, they'll be created.</p>
+                    <input type="email" id="email" placeholder="Email" />
+                    <input type="password" id="password" placeholder="Password" />
+                    <button type="submit">Login</button>
+                </form>
+                
+                <div id="loading-spinner" class="spinner">
+                    <div class="circle"></div>
+                </div>
+            
+                <div id="scene-text" class="custom-scrollbar">
+                </div>
+            
+                <div id="scene-input" style="display:none;" class="custom-scrollbar">
+            
+                    <div id="scene-answer-images">
+                    </div>
+            
+                    <div id="scene-answer-quick-replies">
+                    </div>
+            
+                    <form id="user-input-form">
+                        <input type="text" id="user-input" placeholder="Enter your command...">
+                        <button id="submit-input" type="submit">Submit</button>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <div id="main-footer">
-            {% include 'modals.html' %}
+            <!-- Icons -->
+            <div id="icon-container" style="display: none;">
+                <i class="fas fa-compass" id="teleport-icon"></i>
+                <i class="fas fa-user" id="character-sheet-icon"></i>
+                <i class="fas fa-suitcase" id="inventory-icon"></i>
+                <i class="fas fa-scroll" id="quests-icon"></i>
+            </div>
+
+            <!-- Modals -->
+            <div id="teleport-modal" class="modal">
+                {% include 'modals/teleport_modal.html' %}
+            </div>
+
+            <div id="character-sheet-modal" class="modal">
+                {% include 'modals/character_sheet_modal.html' %}
+            </div>
+
+            <div id="inventory-modal" class="modal">
+                {% include 'modals/inventory_modal.html' %}
+            </div>
+
+            <div id="quests-modal" class="modal">
+                {% include 'modals/quests_modal.html' %}
+            </div>
         </div>
     </main>
 </body>

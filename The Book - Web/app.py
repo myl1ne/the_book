@@ -119,6 +119,17 @@ def admin_data_clean():
         "message": "Data cleaned successfully"
     }
     return jsonify(response_data)
+
+@app.route("/admin/data/populate_world", methods=["GET"])
+def admin_populate_world():
+    from book.world import world_initialize
+    world = world_initialize()
+    response_data = {
+        "status": "success",
+        "message": "Data initialized successfully",
+        "world": world
+    }
+    return jsonify(response_data)
 #------------------------------------------------------------------------------------------------------------------#
 if __name__ == "__main__":
     app.run()

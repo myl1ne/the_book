@@ -246,7 +246,7 @@ class Daemon(FireStoreDocument, Generator):
 
     @staticmethod
     def get_daemon_base_prompt(name):
-        world = FireStoreDocument('configurations','world').getDict()['description']
+        world_config = FireStoreDocument('configurations','world').getDict()
         return f"""
         '''
         IMPORTANT INSTRUCTION: 
@@ -258,7 +258,9 @@ class Daemon(FireStoreDocument, Generator):
 
         You are {name}.
         You are a daemon bound to a location in an imaginary world.
-        The world is described as this: '{world}'.
+        The world is described as this: '{world_config['description']}'.
+        The atmosphere is '{world_config['atmosphere']}'.
+        The expected audience of players is '{world_config['audience']}'.
 
         Users interact with the world through text.
         Their main objective is to move through locations, explore them and be rewarded with secrets and items.
@@ -352,13 +354,15 @@ class Daemon(FireStoreDocument, Generator):
     def get_daemon_event_player_text_answer_with_dialog():
         return """
         Write the lines you and/or the present NPCs want to say.
+        Not every one has to talk: only those that have something to say.
+        Note that being silent is also a choice.
         Keep it short (2/3 lines).
         DO NOT IMPERSONATE THE PLAYER.
 
         Here is an example:
         '
-        <your name>: What is the answer, you ask? Do you at least know the question?\n
-        <npc name>: I heard from a rat it could be 42... *winks*\n
+        <your name>: What is the answer, you ask? Do you at least know the question?\n</your name>
+        <npc name>: I heard from a rat it could be 42... *winks*\n</npc name>
         '
         """
     
