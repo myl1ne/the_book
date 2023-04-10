@@ -34,12 +34,18 @@ class FireStoreDocument:
 
             for doc in docs:
                 print(f'Deleting doc {doc.id}')
+
+                # Recursively delete subcollections
+                subcollections = doc.collections()
+                for subcoll in subcollections:
+                    delete_collection(subcoll, batch_size)
+
                 doc.delete()
                 deleted = deleted + 1
 
             if deleted >= batch_size:
                 return delete_collection(coll_ref, batch_size)
-        
+
         FireStoreDocument.static_init()
         collection_ref = FireStoreDocument.__db.collection(collection_name)
         delete_collection(collection_ref, 10)
