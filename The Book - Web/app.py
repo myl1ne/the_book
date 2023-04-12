@@ -25,7 +25,11 @@ def is_user_in_creation_process(user_id):
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("main_frame.html")
+    return render_template("/home/home.html")
+
+@app.route("/the_book", methods=["GET"])
+def demo_the_book():
+    return render_template("/the_book/home.html")
 
 @app.route("/users/<user_id>/", methods=["GET"])
 def user_get(user_id):
