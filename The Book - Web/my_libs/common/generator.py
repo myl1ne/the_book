@@ -1,8 +1,8 @@
 import openai
 import os
-from book.logger import Log
-from book.bucket_storage import BucketStorage
-from book.firestore_document import FireStoreDocument
+from my_libs.common.logger import Log
+from my_libs.common.bucket_storage import BucketStorage
+from my_libs.common.firestore_document import FireStoreDocument
 import concurrent.futures
 openai.api_key = os.getenv("OPENAI_API_KEY")
 

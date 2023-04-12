@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghostless Shell</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/main_frame.css') }}">
+</head>
+<body>
+    <header>
+        <nav class="nav-drawer">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/the-book">The Book</a></li>
+                <li><a href="/persona">Persona</a></li>
+                <li><a href="/chatgpteam">ChatGPTeam</a></li>
+            </ul>
+        </nav>
+        <button class="toggle-button"><i class="fas fa-chevron-up"></i></button>
+    </header>
+    <main>
+        <!-- Add your main content here -->
+    </main>
+    <footer>
+        <button class="toggle-button"><i class="fas fa-chevron-down"></i></button>
+        <div class="footer-drawer">
+            <ul>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/coffee">Buy me a coffee</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButtons = document.querySelectorAll('.toggle-button');
+            const body = document.querySelector('body');
+            let collapsedHeader = false;
+            let collapsedFooter = false;
+
+            toggleButtons.forEach((btn) => {
+                btn.addEventListener('click', function() {
+                    const parent = btn.parentElement;
+                    const drawer = parent.querySelector('.nav-drawer, .footer-drawer');
+                    const icon = btn.querySelector('i');
+                    const isCollapsed = parent.classList.toggle('collapsed');
+                    drawer.style.display = drawer.style.display === 'none' ? 'flex' : 'none';
+
+                    if (parent.tagName === 'HEADER') {
+                        collapsedHeader = isCollapsed;
+                        icon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+                    } else if (parent.tagName === 'FOOTER') {
+                        collapsedFooter = isCollapsed;
+                        icon.className = isCollapsed ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+                    }
+
+                    if (collapsedHeader && collapsedFooter) {
+                        body.className = 'collapsed-both';
+                    } else if (collapsedHeader) {
+                        body.className = 'collapsed-header';
+                    } else if (collapsedFooter) {
+                        body.className = 'collapsed-footer';
+                    } else {
+                        body.className = '';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

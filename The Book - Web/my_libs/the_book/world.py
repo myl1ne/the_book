@@ -1,6 +1,6 @@
-from book.firestore_document import FireStoreDocument
-from book.generator import Generator
-from book.logger import Log
+from my_libs.common.firestore_document import FireStoreDocument
+from my_libs.common.generator import Generator
+from my_libs.common.logger import Log
 import json5
 
 def world_initialize():

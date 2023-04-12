@@ -1,9 +1,9 @@
 import re
-from book.logger import Log
-from book.user import User
-from book.location import Location
-from book.daemon import Daemon, extract_enclosed_string
-from book.inner_daemon import InnerDaemon
+from my_libs.common.logger import Log
+from my_libs.the_book.user import User
+from my_libs.the_book.location import Location
+from my_libs.the_book.daemon import Daemon, extract_enclosed_string
+from my_libs.the_book.inner_daemon import InnerDaemon
 from flask import url_for
    
 class Book:

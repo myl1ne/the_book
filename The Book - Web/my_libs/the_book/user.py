@@ -1,5 +1,5 @@
-from book.firestore_document import FireStoreDocument
-from book.logger import Log
+from my_libs.common.firestore_document import FireStoreDocument
+from my_libs.common.logger import Log
 from flask import url_for
    
 class User(FireStoreDocument):

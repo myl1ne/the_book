@@ -1,9 +1,9 @@
 from flask import Flask, flash, url_for, make_response, Response, jsonify, render_template, request
 import os
-from book.book import Book
-from book.firestore_document import FireStoreDocument
-from book.user import User
-from book.inner_daemon import InnerDaemon
+from my_libs.the_book.book import Book
+from my_libs.common.firestore_document import FireStoreDocument
+from my_libs.the_book.user import User
+from my_libs.the_book.inner_daemon import InnerDaemon
 
 app = Flask(__name__)
 
@@ -25,7 +25,7 @@ def is_user_in_creation_process(user_id):
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("home.html")
+    return render_template("main_frame.html")
 
 @app.route("/users/<user_id>/", methods=["GET"])
 def user_get(user_id):
@@ -122,7 +122,7 @@ def admin_data_clean():
 
 @app.route("/admin/data/populate_world", methods=["GET"])
 def admin_populate_world():
-    from book.world import world_initialize
+    from my_libs.the_book.world import world_initialize
     world = world_initialize()
     response_data = {
         "status": "success",
@@ -138,7 +138,7 @@ def index_persona(persona_id, user_id):
 
 @app.route("/persona/<persona_id>/<user_id>/read_and_reply", methods=["POST"])
 def persona_read_and_reply(persona_id, user_id):
-    from book.persona.persona import Persona
+    from my_libs.persona.persona import Persona
     persona = Persona(persona_id)
     data = request.get_json()
     text = data["text"]
@@ -160,7 +160,7 @@ def persona_read_and_reply(persona_id, user_id):
 
 @app.route("/persona/<persona_id>/<user_id>/episodes", methods=["GET"])
 def fetch_episodes(persona_id, user_id):
-    from book.persona.persona import Persona
+    from my_libs.persona.persona import Persona
 
     persona = Persona(persona_id)
     episodes = persona.get_all_episodes(user_id)
