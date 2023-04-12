@@ -126,6 +126,7 @@ export async function logUserInServer(id) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
             },
         });
 
@@ -150,6 +151,7 @@ export async function user_watch(user_id) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
             },
         });
 
@@ -178,6 +180,7 @@ export async function moveUserToLocation(user_id, location_id) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
             },
         });
 
@@ -206,6 +209,7 @@ export async function user_writes(user_id, text) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
             },
             body: JSON.stringify({ 'text': text }),
         });

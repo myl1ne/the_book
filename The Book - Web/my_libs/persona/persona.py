@@ -1,10 +1,10 @@
 from datetime import datetime, time
 import json5
-from book.firestore_document import FireStoreDocument
+from my_libs.common.firestore_document import FireStoreDocument
 from firebase_admin import firestore
-from book.user import User
-from book.logger import Log
-from book.generator import Generator
+from my_libs.the_book.user import User
+from my_libs.common.logger import Log
+from my_libs.common.generator import Generator
 
 class Persona(FireStoreDocument, Generator):
 

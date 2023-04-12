@@ -1,10 +1,10 @@
 import json5
-from book.firestore_document import FireStoreDocument
+from my_libs.common.firestore_document import FireStoreDocument
 from firebase_admin import firestore
-from book.location import Location
-from book.user import User
-from book.logger import Log
-from book.generator import Generator
+from my_libs.the_book.location import Location
+from my_libs.the_book.user import User
+from my_libs.common.logger import Log
+from my_libs.common.generator import Generator
 from flask import url_for
 
 class InnerDaemon(FireStoreDocument, Generator):
