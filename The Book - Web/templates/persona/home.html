@@ -1,185 +1,135 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Persona Chat</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            width: 80%;
-            max-width: 800px;
-            margin: 20px;
-            padding: 20px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-        }
-        .chat-window {
-            overflow: auto;
-            height: 300px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .message {
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        .message.user {
-            background-color: aqua;
-            text-align: right;
-        }
-        .message.assistant {
-            background-color: rgb(0, 255, 60);
-            text-align: left;
-        }
-        .message.system {
-            text-align: center;
-            font-style: italic;
-            color: #777;
-        }
-        .episodes-list {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            margin-bottom: 20px;
-        }
-        .episode-title {
-            cursor: pointer;
-            margin-bottom: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="chat-window" id="chat-window">
-            <!-- Messages will be added dynamically -->
-        </div>
-        <form id="message-form">
-            <label for="message">Message:</label>
-            <input type="text" id="message" name="message">
-            <button type="submit">Send</button>
-        </form>
+{% extends "main_frame.html" %}
 
-        <div class="episodes-list" id="episodes-list">
-            <!-- Episodes will be added dynamically -->
-        </div>
-        
-        <button id="load-episodes">Load Episodes</button>
+{% block headers %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style/persona/persona.css') }}" />
+{% endblock %}
+
+{% block title %}Persona{% endblock %}
+
+{% block content %}
+<main class="content-main">
+    <h1>{{ persona_id }}</h1>
+    <div class="chat-window" id="chat-window">
+        <!-- Messages will be added dynamically -->
     </div>
+    <form id="message-form">
+        <label for="message">Message:</label>
+        <input type="text" id="message" name="message">
+        <button type="submit">Send</button>
+    </form>
 
-    <script>
-        const form = document.getElementById("message-form");
-        const messageInput = document.getElementById("message");
-        const chatWindow = document.getElementById("chat-window");
+    <div class="episodes-list" id="episodes-list">
+        <!-- Episodes will be added dynamically -->
+    </div>
+    
+    <button id="load-episodes">Load Episodes</button>
+</main>
 
-        function addMessageToChat(role, content) {
-            const messageDiv = document.createElement("div");
-            messageDiv.classList.add("message", role);
-            messageDiv.innerHTML = `<p>${content}</p>`;
-            chatWindow.appendChild(messageDiv);
-            chatWindow.scrollTop = chatWindow.scrollHeight; // Scroll to the bottom
-        }
+<script>
+    const form = document.getElementById("message-form");
+    const messageInput = document.getElementById("message");
+    const chatWindow = document.getElementById("chat-window");
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const message = messageInput.value;
-            const personaId = "{{ persona_id }}"; // Jinja syntax to get persona_id
-            const userId = "{{ user_id }}"; // Jinja syntax to get user_id
-            const url = `/persona/${personaId}/${userId}/read_and_reply`;
+    function addMessageToChat(role, content) {
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add("message", role);
+        messageDiv.innerHTML = `<p>${content}</p>`;
+        chatWindow.appendChild(messageDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight; // Scroll to the bottom
+    }
 
-            // Add user message to chat
-            addMessageToChat("user", message);
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const message = messageInput.value;
+        const personaId = "{{ persona_id }}"; // Jinja syntax to get persona_id
+        const userId = "{{ user_id }}"; // Jinja syntax to get user_id
+        const url = `/persona/${personaId}/${userId}/read_and_reply`;
 
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({text: message})
-            });
+        // Add user message to chat
+        addMessageToChat("user", message);
 
-            if (response.ok) {
-                const data = await response.json();
-                // Add persona's reply to chat
-                addMessageToChat("assistant", data);
-            } else {
-                // Add an error message to chat
-                addMessageToChat("system", "Error: Could not get reply from Persona");
-            }
-
-            messageInput.value = "";
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken()
+            },
+            body: JSON.stringify({text: message})
         });
 
-        const episodesList = document.getElementById("episodes-list");
-        const loadEpisodesButton = document.getElementById("load-episodes");
+        if (response.ok) {
+            const data = await response.json();
+            // Add persona's reply to chat
+            addMessageToChat("assistant", data);
+        } else {
+            // Add an error message to chat
+            addMessageToChat("system", "Error: Could not get reply from Persona");
+        }
 
-        function createEpisodeElement(date, summary, messages) {
-            const episodeDiv = document.createElement("div");
-            episodeDiv.classList.add("episode");
+        messageInput.value = "";
+    });
 
-            const header = document.createElement("h3");
-            header.textContent = `Episode on ${date}`;
-            episodeDiv.appendChild(header);
+    const episodesList = document.getElementById("episodes-list");
+    const loadEpisodesButton = document.getElementById("load-episodes");
 
-            const summaryDiv = document.createElement("div");
-            summaryDiv.classList.add("episode-summary");
-            summaryDiv.innerHTML = `<strong>Summary:</strong><br>${summary}`;
-            episodeDiv.appendChild(summaryDiv);
+    function createEpisodeElement(date, summary, messages) {
+        const episodeDiv = document.createElement("div");
+        episodeDiv.classList.add("episode");
 
-            const messagesDiv = document.createElement("div");
-            messagesDiv.classList.add("episode-messages");
-            const messagesTitle = document.createElement("div");
-            messagesTitle.classList.add("episode-messages");
-            messagesTitle.innerHTML = `<strong>Messages:</strong>`;
-            messagesDiv.appendChild(messagesTitle);
-            messages.forEach((message) => {
-                const messageDiv = document.createElement("div");
-                messageDiv.classList.add("message", message.role);
-                messageDiv.innerHTML = `<p>${message.content}</p>`;
-                messagesDiv.appendChild(messageDiv);
+        const header = document.createElement("h3");
+        header.textContent = `Episode on ${date}`;
+        episodeDiv.appendChild(header);
+
+        const summaryDiv = document.createElement("div");
+        summaryDiv.classList.add("episode-summary");
+        summaryDiv.innerHTML = `<strong>Summary:</strong><br>${summary}`;
+        episodeDiv.appendChild(summaryDiv);
+
+        const messagesDiv = document.createElement("div");
+        messagesDiv.classList.add("episode-messages");
+        const messagesTitle = document.createElement("div");
+        messagesTitle.classList.add("episode-messages");
+        messagesTitle.innerHTML = `<strong>Messages:</strong>`;
+        messagesDiv.appendChild(messagesTitle);
+        messages.forEach((message) => {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", message.role);
+            messageDiv.innerHTML = `<p>${message.content}</p>`;
+            messagesDiv.appendChild(messageDiv);
+        });
+        episodeDiv.appendChild(messagesDiv);
+
+        return episodeDiv;
+    }
+
+    async function fetchEpisodes() {
+        const personaId = "{{ persona_id }}";
+        const userId = "{{ user_id }}";
+        const url = `/persona/${personaId}/${userId}/episodes`;
+
+        const response = await fetch(url);
+
+        if (response.ok) {
+            const episodes = await response.json();
+
+            episodesList.innerHTML = ""; // Clear the episodes list
+            episodes.forEach((episode) => {
+                const episodeElement = createEpisodeElement(
+                    episode.date,
+                    episode.episode_summary,
+                    episode.messages
+                );
+                episodesList.appendChild(episodeElement);
             });
-            episodeDiv.appendChild(messagesDiv);
-
-            return episodeDiv;
+        } else {
+            const errorDiv = document.createElement("div");
+            errorDiv.classList.add("error");
+            errorDiv.textContent = "Error: Could not fetch episodes";
+            episodesList.appendChild(errorDiv);
         }
+    }
 
-        async function fetchEpisodes() {
-            const personaId = "{{ persona_id }}";
-            const userId = "{{ user_id }}";
-            const url = `/persona/${personaId}/${userId}/episodes`;
+    loadEpisodesButton.addEventListener("click", fetchEpisodes);
+</script>
+{% endblock %}
 
-            const response = await fetch(url);
-
-            if (response.ok) {
-                const episodes = await response.json();
-
-                episodesList.innerHTML = ""; // Clear the episodes list
-                episodes.forEach((episode) => {
-                    const episodeElement = createEpisodeElement(
-                        episode.date,
-                        episode.episode_summary,
-                        episode.messages
-                    );
-                    episodesList.appendChild(episodeElement);
-                });
-            } else {
-                const errorDiv = document.createElement("div");
-                errorDiv.classList.add("error");
-                errorDiv.textContent = "Error: Could not fetch episodes";
-                episodesList.appendChild(errorDiv);
-            }
-        }
-
-        loadEpisodesButton.addEventListener("click", fetchEpisodes);
-    </script>
-</body>
-</html>
