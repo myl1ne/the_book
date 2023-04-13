@@ -7,13 +7,9 @@
 
 /*my_app contains 3 sections: main-header main-content main-footer (and modals)*/
 my_app {
-    font-family: 'IM Fell English', serif;
-    background-color: #222;
-    color: #ddd;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-
     display: grid;
     grid-template-rows: 50px 1fr 50px;
     flex-direction: column;
