@@ -1,0 +1,50 @@
+{% extends "main_frame.html" %}
+
+{% block title %}Chat GPTeam{% endblock %}
+
+{% block headers %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style/chat_gpteam/chat_gpteam.css') }}" />
+{% endblock %}
+
+{% block content %}
+<main class="content-main">
+    <h1>ChatGPTeam: A dream team of AI at your service</h1>
+    <button id="clear-button">Clear</button>
+    <button id="run-button">Run</button>
+</main>
+<script>
+    document.getElementById('clear-button').addEventListener('click', async () => {
+        const response = await fetch('/chat_gpteam/clear', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                "X-CSRFToken": getCSRFToken()
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log(data.reply);
+        } else {
+            console.error('Error:', response.status, response.statusText);
+        }
+    });
+
+    document.getElementById('run-button').addEventListener('click', async () => {
+        const response = await fetch('/chat_gpteam/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                "X-CSRFToken": getCSRFToken()
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log(data.reply);
+        } else {
+            console.error('Error:', response.status, response.statusText);
+        }
+    });
+</script>
+{% endblock %}

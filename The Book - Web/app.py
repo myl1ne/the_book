@@ -6,6 +6,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from my_libs.the_book.app import initialize as initialize_the_book
 from my_libs.persona.app import initialize as initialize_persona
+from my_libs.chat_gpteam.app import initialize as initialize_chat_gpteam
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
@@ -23,7 +24,7 @@ app.is_ready = False
 
 initialize_the_book(app)
 initialize_persona(app)
-
+initialize_chat_gpteam(app)
 app.is_ready = True
 #------------------------------------------------------------------------------------------------------------------#
 @app.route("/", methods=["GET"])
@@ -37,6 +38,10 @@ def content_the_book():
 @app.route("/persona/<persona_id>/<user_id>/", methods=["GET"])
 def content_persona(persona_id, user_id):
     return render_template("persona/home.html", persona_id=persona_id, user_id=user_id)
+
+@app.route("/chat_gpteam", methods=["GET"])
+def content_chatgpteam():
+    return render_template("/chat_gpteam/home.html")
 
 @app.route("/contact", methods=["GET", "POST"])
 def content_contact():
