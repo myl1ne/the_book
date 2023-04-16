@@ -107,7 +107,7 @@ document.getElementById("user-input-form").addEventListener("submit", async (eve
     const user_input = document.getElementById("user-input");
     const currentUser = getCurrentUser();
     console.log(`User ${currentUser.uid} is submitting ${user_input.value}`);
-    user_writes(currentUser.uid, user_input.value);
+    user_writes(user_input.value);
     // Disable input and show spinner
     showSpinner();
 });
@@ -140,7 +140,7 @@ document.addEventListener("book-event-content-update", async (event) => {
                         showSpinner();
                         const currentUser = getCurrentUser();
                         console.log(`User ${currentUser.uid} is submitting ${choice}`);
-                        user_writes(currentUser.uid, choice);
+                        user_writes(choice);
                     });
                     sceneAnswerQuickReplies.appendChild(button);
                 }
@@ -156,7 +156,7 @@ document.addEventListener("book-event-content-update", async (event) => {
                     showSpinner();
                     const currentUser = getCurrentUser();
                     console.log(`User ${currentUser.uid} is submitting ${choice.image_description}`);
-                    user_writes(currentUser.uid, choice.image_description);
+                    user_writes(choice.image_description);
                 });
                 sceneAnswerImgs.appendChild(img);
             }

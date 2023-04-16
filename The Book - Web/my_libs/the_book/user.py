@@ -32,6 +32,17 @@ class User(FireStoreDocument):
             'character.known_locations': self.getDict()['character']['known_locations'] + [location_id]
         })
     
+    def getFullCharacterDict(self):
+        if not self.exists():
+            Log.error(f'User {self.id()} does not exist => Abort')
+            return
+        user = self.getDict()
+        return {
+            'id': user['id'],
+            'current_location': user['current_location'],
+            'character': user['character'],
+        }
+
     def getLiteCharacterDict(self):
         if not self.exists():
             Log.error(f'User {self.id()} does not exist => Abort')
@@ -45,7 +56,10 @@ class User(FireStoreDocument):
                 'description': user['character']['description'],
                 'level': user['character']['level'],
                 'stats': user['character']['stats'],
-                'inventory': user['character']['inventory'],
+                'inventory': [
+                    {k: v for k, v in item.items() if k != 'image_url'}
+                    for item in user['character']['inventory']
+                ],
                 'inner_daemon_id': user['character']['inner_daemon_id'],
                 'known_locations': user['character']['known_locations'],
                 'quests': user['character']['quests'],

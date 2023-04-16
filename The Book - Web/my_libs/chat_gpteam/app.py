@@ -6,8 +6,8 @@ def initialize(app):
     dream_config = {
         "team": "The Matrix Reloaded",
         "members": ['Trinity'],
-        "project_brief": 'Create a proof of concept website. Make a game using only HTML, CSS and JavaScript.',
-        "branch_name": "debug-4"
+        "project_brief": 'Create a simple game in python.',
+        "branch_name": "debug-5"
     }
     team = DreamTeam(id=dream_config["team"], branch_name=dream_config["branch_name"])
     team.initializeTeam(members=dream_config["members"], project_brief=dream_config["project_brief"])

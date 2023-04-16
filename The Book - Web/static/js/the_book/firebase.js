@@ -24,12 +24,13 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
 let currentUser = null;
+let currentToken = null;
 
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         console.log(`onAuthStateChanged: Used signed in: ${user}`)
         currentUser = user;
-        const serverSuccess = await logUserInServer(currentUser.uid);
+        const serverSuccess = await logUserInServer();
         if (serverSuccess) {
             console.log("Character Log: Success");
             
@@ -43,49 +44,25 @@ auth.onAuthStateChanged(async (user) => {
             await user_watch(currentUser.uid);
             return true;
         }
-        else
-        {
-            console.log("Character Log: Failure");
-            return false;
-        }
-    } else {
-        console.log(`onAuthStateChanged: Used signed out`)
-        currentUser = null;
-        const myEvent = new CustomEvent("book-event-login-update", {
-            detail: {
-                status: "logged-out",
-                user: currentUser,
-            },
-        });
-        document.dispatchEvent(myEvent);
     }
+    console.log(`onAuthStateChanged: Used signed out`)
+    currentUser = null;
+    currentToken = null;
+    const myEvent = new CustomEvent("book-event-login-update", {
+        detail: {
+            status: "logged-out",
+            user: currentUser,
+        },
+    });
+    document.dispatchEvent(myEvent);
 });
 
 // Functions
 export function getCurrentUser() {
-    return currentUser
+    return currentUser;
 }
-
-export async function getUserDocument(user_id) {
-    try {
-        const response = await fetch(`/users/${user_id}/`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            return data;
-        } else {
-            console.error("Error getting user document:", response.statusText);
-            return false;
-        }
-    } catch (error) {
-        console.error("Error fetching user document:", error);
-        return false;
-    }
+export function getCurrentToken() {
+    return currentToken;
 }
 
 export async function authenticateUser(email, password) {
@@ -120,39 +97,76 @@ export async function logoutUser() {
     }
 }
 
-export async function logUserInServer(id) {
+export async function logUserInServer() {
+    let result = false;
     try {
-        const response = await fetch(`/users/${id}/log`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken(),
-            },
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Server response:", data);
-            // Use the JSON data in your application
-            return true;
-        } else {
-            console.error("Error logging user on server:", response.statusText);
+        result = getCurrentUser().getIdToken(true).then(async (idToken) => {
+            currentToken = idToken;
+            const response = await fetch(`/users/log`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    idToken: currentToken,
+                }),
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Server response:", data);
+                // Use the JSON data in your application
+                return true;
+            } else {
+                console.error("Error logging user on server:", response.statusText);
+                return false;
+            }
+        }).catch(function (error) {
+            console.error("Error while getting idToken:", error);
+            currentToken = null;
             return false;
-        }
+          });
     } catch (error) {
         console.error("Error logging user on server:", error);
+        result = false;
+    }
+    return result;
+}
+
+export async function getUserDocument(user_id) {
+    try {
+        const response = await fetch(`/users/${user_id}/`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        } else {
+            console.error("Error getting user document:", response.statusText);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error fetching user document:", error);
         return false;
     }
 }
 
-export async function user_watch(user_id) {
+export async function user_watch() {
     try {
-        const response = await fetch(`/users/${user_id}/watch`, {
+        const response = await fetch(`/users/watch`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": getCSRFToken(),
             },
+            body: JSON.stringify({
+                idToken: currentToken,
+            }),
         });
 
         if (response.ok) {
@@ -174,14 +188,17 @@ export async function user_watch(user_id) {
     }
 }
 
-export async function moveUserToLocation(user_id, location_id) {
+export async function moveUserToLocation(location_id) {
     try {
-        const response = await fetch(`/users/${user_id}/move_to/${location_id}`, {
+        const response = await fetch(`/users/move_to/${location_id}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": getCSRFToken(),
             },
+            body: JSON.stringify({
+                idToken: currentToken,
+            }),
         });
 
         if (response.ok) {
@@ -203,15 +220,18 @@ export async function moveUserToLocation(user_id, location_id) {
     }
 }
 
-export async function user_writes(user_id, text) {
+export async function user_writes(text) {
     try {
-        const response = await fetch(`/users/${user_id}/write`, {
+        const response = await fetch(`/users/write`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": getCSRFToken(),
             },
-            body: JSON.stringify({ 'text': text }),
+            body: JSON.stringify({
+                'text': text,
+                idToken: currentToken,
+            }),
         });
 
         if (response.ok) {

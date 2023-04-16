@@ -55,6 +55,6 @@ window.onclick = (event) => {
 
 document.getElementById('teleport-btn').addEventListener('click', () => {
     const selectedLocation = document.getElementById('teleport-location').value;
-    moveUserToLocation( getCurrentUser().uid, selectedLocation);
+    moveUserToLocation(selectedLocation);
     closeAllModals();
 });

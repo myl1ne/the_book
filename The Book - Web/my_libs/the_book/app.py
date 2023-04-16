@@ -3,6 +3,7 @@ from my_libs.the_book.book import Book
 from my_libs.common.firestore_document import FireStoreDocument
 from my_libs.the_book.user import User
 from my_libs.the_book.inner_daemon import InnerDaemon
+from my_libs.common.security import firebase_auth_required
 
 # Helper functions
 def is_user_in_creation_process(user_id):
@@ -24,18 +25,21 @@ def initialize(app):
             return jsonify({
                 "status": "success",
                 "message": "User retrieved successfully",
-                "user": user.getDict(),
+                "user": user.getFullCharacterDict(),
             })
         return jsonify({
             "status": "error",
             "message": "User does not exist",
         })
 
-    @app.route("/users/<id>/log", methods=["POST"])
-    def user_log(id):
-        user = User(id)
+    @app.route("/users/log", methods=["POST"])
+    @firebase_auth_required
+    def user_log():
+        user_id = request.user['uid']
+        user = User(user_id)
         if not user.exists():
-            app.book.on_new_user(user_id = id)
+            app.book.on_new_user(user_id = user_id)
+        
         response_data = {
             "status": "success",
             "message": "User logged successfully",
@@ -43,12 +47,14 @@ def initialize(app):
         }
         return jsonify(response_data)
 
-    @app.route("/users/<user_id>/watch", methods=["POST"])
-    def user_watch(user_id):
+    @app.route("/users/watch", methods=["POST"])
+    @firebase_auth_required
+    def user_watch():
         '''
         This method is called after a user logs in.
         It either redirect to watching the current location or to the creation process.
         '''
+        user_id = request.user['uid']
         if is_user_in_creation_process(user_id):
             data = app.book.on_creation_step(user_id, text = None)
             data["creation_process_passed"] = False
@@ -58,8 +64,10 @@ def initialize(app):
             data["creation_process_passed"] = True
             return jsonify(data)
 
-    @app.route("/users/<user_id>/move_to/<location_id>", methods=["POST"])
-    def user_move_to_location(user_id, location_id):
+    @app.route("/users/move_to/<location_id>", methods=["POST"])
+    @firebase_auth_required
+    def user_move_to_location(location_id):
+        user_id = request.user['uid']
         try:
             data = app.book.move_character_to_location(user_id = user_id, location_id = location_id)
         except Exception as e:
@@ -74,8 +82,10 @@ def initialize(app):
         data["creation_process_passed"] = True
         return jsonify(data)
 
-    @app.route("/users/<user_id>/write", methods=["POST"])
-    def user_write(user_id):
+    @app.route("/users/write", methods=["POST"])
+    @firebase_auth_required
+    def user_write():
+        user_id = request.user['uid']
         data = request.get_json()
         text = data["text"]
         if is_user_in_creation_process(user_id):
