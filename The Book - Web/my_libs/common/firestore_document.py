@@ -63,6 +63,9 @@ class FireStoreDocument:
     def get(self):
         return self.doc_ref.get()
     
+    def getPath(self, path):
+        return self.doc_ref.get(path)
+    
     def getDict(self):
         dict = document_to_dict(self.get())
         dict['id'] = self.id()

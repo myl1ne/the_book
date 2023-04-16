@@ -4,6 +4,8 @@ from my_libs.common.firestore_document import FireStoreDocument
 from flask_mail import Mail, Message
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
+from my_libs.common.app import initialize as initialize_common
+from my_libs.common.security import firebase_auth_checked, isAdmin
 from my_libs.the_book.app import initialize as initialize_the_book
 from my_libs.persona.app import initialize as initialize_persona
 from my_libs.chat_gpteam.app import initialize as initialize_chat_gpteam
@@ -21,29 +23,35 @@ csrf = CSRFProtect(app)
 
 #------------------------------------------------------------------------------------------------------------------#
 app.is_ready = False
-
+initialize_common(app)
 initialize_the_book(app)
 initialize_persona(app)
 initialize_chat_gpteam(app)
+
 app.is_ready = True
 #------------------------------------------------------------------------------------------------------------------#
 @app.route("/", methods=["GET"])
+@firebase_auth_checked
 def index():
-    return render_template("/home/home.html")
+    return render_template("/home/home.html", isAdmin = isAdmin(request.user.get('uid')))
 
 @app.route("/the_book", methods=["GET"])
+@firebase_auth_checked
 def content_the_book():
-    return render_template("/the_book/home.html")
+    return render_template("/the_book/home.html", isAdmin = isAdmin(request.user.get('uid')))
 
 @app.route("/persona/<persona_id>/<user_id>/", methods=["GET"])
+@firebase_auth_checked
 def content_persona(persona_id, user_id):
-    return render_template("persona/home.html", persona_id=persona_id, user_id=user_id)
+    return render_template("persona/home.html", isAdmin = isAdmin(request.user.get('uid')), persona_id=persona_id, user_id=user_id)
 
 @app.route("/chat_gpteam", methods=["GET"])
+@firebase_auth_checked
 def content_chatgpteam():
-    return render_template("/chat_gpteam/home.html")
+    return render_template("/chat_gpteam/home.html", isAdmin = isAdmin(request.user.get('uid')))
 
 @app.route("/contact", methods=["GET", "POST"])
+@firebase_auth_checked
 def content_contact():
     form = FlaskForm()
     if form.validate_on_submit():
@@ -60,35 +68,7 @@ def content_contact():
         except Exception as e:
             print(e)
             flash('An error occurred. Please try again.', 'error')
-    return render_template("/contact/contact.html", form=form)
-
-#------------------------------------------------------------------------------------------------------------------#
-# Admin methods
-@app.route("/admin/data/clean", methods=["GET"])
-def admin_data_clean():
-    FireStoreDocument.wipe_collection('users')
-    FireStoreDocument.wipe_collection('inner_daemons')
-    FireStoreDocument.wipe_collection('daemons')
-    FireStoreDocument.wipe_collection('locations')
-    response_data = {
-        "status": "success",
-        "message": "Data cleaned successfully"
-    }
-    return jsonify(response_data)
-
-@app.route("/admin/data/populate_world", methods=["GET"])
-def admin_populate_world():
-    from my_libs.the_book.world import world_initialize
-    world = world_initialize()
-    response_data = {
-        "status": "success",
-        "message": "Data initialized successfully",
-        "world": world
-    }
-    return jsonify(response_data)
-#------------------------------------------------------------------------------------------------------------------#
-# Persona methods
-
+    return render_template("/contact/contact.html", isAdmin = isAdmin(request.user.get('uid')), form=form)
 
 #------------------------------------------------------------------------------------------------------------------#
 if __name__ == "__main__":
