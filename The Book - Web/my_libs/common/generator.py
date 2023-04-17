@@ -31,6 +31,7 @@ class Generator:
             max_tokens=Generator.__llm_config['max_tokens'],
         )
         Log.debug("ask_large_language_model... done")
+        Log.debug(f"Answer is: {chat_completion.choices[0].message.content}")
         return (chat_completion.choices[0].message.content, chat_completion.usage["total_tokens"])
 
     def generate2D(self, prompt: str, size_override = None, additional_suffixes = []) -> str:

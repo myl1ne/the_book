@@ -97,33 +97,13 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             const toggleButtons = document.querySelectorAll('.toggle-button');
-            let collapsedHeader = false;
-            let collapsedFooter = false;
-
             toggleButtons.forEach((btn) => {
                 btn.addEventListener('click', function() {
-                    const parent = btn.parentElement;
-                    const drawer = parent.querySelector('.nav-drawer, .footer-drawer');
-                    const icon = btn.querySelector('i');
-                    const isCollapsed = parent.classList.toggle('collapsed');
-                    drawer.style.display = drawer.style.display === 'none' ? 'flex' : 'none';
 
-                    if (parent.tagName === 'HEADER') {
-                        collapsedHeader = isCollapsed;
-                        icon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
-                    } else if (parent.tagName === 'FOOTER') {
-                        collapsedFooter = isCollapsed;
-                        icon.className = isCollapsed ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
-                    }
-
-                    if (collapsedHeader && collapsedFooter) {
-                        headerFooterClose();
-                    } else if (collapsedHeader) {
-                        document.querySelector('body').className = 'collapsed-header';
-                    } else if (collapsedFooter) {
-                        document.querySelector('body').className = 'collapsed-footer';
-                    } else {
+                    if (btn.parentElement.classList.contains('collapsed')){
                         headerFooterOpen();
+                    } else {
+                        headerFooterClose();
                     }
                 });
             });

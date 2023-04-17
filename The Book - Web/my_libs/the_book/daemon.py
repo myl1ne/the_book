@@ -293,9 +293,10 @@ class Daemon(FireStoreDocument, Generator):
     def handle_action_adventurer_took_exit_path(self, chats, user_dict, text):
         messages_buff = chats + [{"role": "system", "content": Daemon.get_daemon_event_player_text_get_destination()}]
         (answer_data, token_count) = self.ask_large_language_model(messages_buff)
+        parsed = json5.loads(answer_data)
         answer_data = {
             'classification': 'adventurer_took_exit_path',
-            'destination_id': answer_data,
+            'destination_id': parsed['id'],
         }
         evt = [{"role": "assistant", "content": "I send you to " + answer_data['destination_id']}]
         return (answer_data, evt)
@@ -414,9 +415,11 @@ class Daemon(FireStoreDocument, Generator):
     @staticmethod
     def get_daemon_event_player_text_get_destination():
         return """
-        Return the id of the location where the adventurer should be sent.
-        Return ONLY THE ID, without any other text or explanation.
-        For example, if you want to send the adventurer to the location named "The Halls", return "The Halls".
+        DO NOT WRITE ANYTHING ELSE THAN THE FOLLOWING FORMAT:
+        {
+            "id": "id of the location where the adventurer should be sent",
+            "narrative": "A short narrative description of what happened and how the adventurer got to the new location"
+        }
         """
     
     @staticmethod

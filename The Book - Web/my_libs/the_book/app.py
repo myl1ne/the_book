@@ -77,7 +77,7 @@ def initialize(app):
                     "daemon_message": f"The daemon speaks in tongues, you do not understand... {str(e)}",
                     "daemon_name": type(e).__name__,
                     "location_name": "CrashTown",
-                    "image_url": url_for('static', '/images/boo_exception.png'),
+                    "image_url": url_for('static', filename = '/images/book_exception.png'),
                 }
         data["creation_process_passed"] = True
         return jsonify(data)
@@ -101,7 +101,7 @@ def initialize(app):
                     "daemon_message": f"The daemon speaks in tongues, you do not understand... {str(e)}",
                     "daemon_name": type(e).__name__,
                     "location_name": "CrashTown",
-                    "image_url": url_for('static', '/images/boo_exception.png'),
+                    "image_url": url_for('static', filename ='/images/book_exception.png'),
                 }
             response_data["creation_process_passed"] = True
         return jsonify(response_data)
