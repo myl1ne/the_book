@@ -58,10 +58,45 @@
         </div>
     </footer>
 
-    <script type = "module">
+    <script>
+        function headerFooterClose() {
+            document.querySelector('body').className = 'collapsed-both';
+            let nav = document.querySelector('.nav-drawer');
+            nav.style.display = 'none';
+            nav.parentElement.classList.add('collapsed');
+            let foot = document.querySelector('.footer-drawer');
+            foot.style.display = 'none';
+            foot.parentElement.classList.add('collapsed');
+            const toggleButtons = document.querySelectorAll('.toggle-button');
+            toggleButtons.forEach((btn) => {
+                if (btn.parentElement.tagName === 'HEADER') {
+                    btn.querySelector('i').className = 'fas fa-chevron-down';
+                } else if (btn.parentElement.tagName === 'FOOTER') {
+                    btn.querySelector('i').className = 'fas fa-chevron-up';
+                }
+            });
+        }
+
+        function headerFooterOpen() {
+            document.querySelector('body').className = '';
+            let nav = document.querySelector('.nav-drawer');
+            nav.style.display = 'flex';
+            nav.parentElement.classList.remove('collapsed');
+            let foot = document.querySelector('.footer-drawer');
+            foot.style.display = 'flex';
+            foot.parentElement.classList.remove('collapsed');
+            const toggleButtons = document.querySelectorAll('.toggle-button');
+            toggleButtons.forEach((btn) => {
+                if (btn.parentElement.tagName === 'HEADER') {
+                    btn.querySelector('i').className = 'fas fa-chevron-up';
+                } else if (btn.parentElement.tagName === 'FOOTER') {
+                    btn.querySelector('i').className = 'fas fa-chevron-down';
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const toggleButtons = document.querySelectorAll('.toggle-button');
-            const body = document.querySelector('body');
             let collapsedHeader = false;
             let collapsedFooter = false;
 
@@ -82,13 +117,13 @@
                     }
 
                     if (collapsedHeader && collapsedFooter) {
-                        body.className = 'collapsed-both';
+                        headerFooterClose();
                     } else if (collapsedHeader) {
-                        body.className = 'collapsed-header';
+                        document.querySelector('body').className = 'collapsed-header';
                     } else if (collapsedFooter) {
-                        body.className = 'collapsed-footer';
+                        document.querySelector('body').className = 'collapsed-footer';
                     } else {
-                        body.className = '';
+                        headerFooterOpen();
                     }
                 });
             });
