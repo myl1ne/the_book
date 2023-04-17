@@ -41,7 +41,6 @@ auth.onAuthStateChanged(async (user) => {
                 },
             });
             document.dispatchEvent(myEvent);
-            await user_watch(currentUser.uid);
             return true;
         }
     }
@@ -58,6 +57,10 @@ auth.onAuthStateChanged(async (user) => {
 });
 
 // Functions
+export function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+
 export function getCurrentUser() {
     return currentUser;
 }
@@ -197,98 +200,3 @@ export async function post_to_authenticated_route(route, additionalBody = {}) {
       });
 }
 
-export async function user_watch() {
-    try {
-        const response = await fetch(`/users/watch`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken(),
-            },
-            body: JSON.stringify({
-                idToken: currentToken,
-            }),
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Server response:", data);
-
-            const myEvent = new CustomEvent("book-event-content-update", {
-                detail: data,
-            });
-            document.dispatchEvent(myEvent);
-            return true;
-        } else {
-            console.error("Error moving user on server:", response.statusText);
-            return false;
-        }
-    } catch (error) {
-        console.error("Error moving user on server:", error);
-        return false;
-    }
-}
-
-export async function moveUserToLocation(location_id) {
-    try {
-        const response = await fetch(`/users/move_to/${location_id}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken(),
-            },
-            body: JSON.stringify({
-                idToken: currentToken,
-            }),
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Server response:", data);
-
-            const myEvent = new CustomEvent("book-event-content-update", {
-                detail: data,
-            });
-            document.dispatchEvent(myEvent);
-            return true;
-        } else {
-            console.error("Error moving user on server:", response.statusText);
-            return false;
-        }
-    } catch (error) {
-        console.error("Error moving user on server:", error);
-        return false;
-    }
-}
-
-export async function user_writes(text) {
-    try {
-        const response = await fetch(`/users/write`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken(),
-            },
-            body: JSON.stringify({
-                'text': text,
-                idToken: currentToken,
-            }),
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Server response:", data);
-            const myEvent = new CustomEvent("book-event-content-update", {
-                detail: data,
-            });
-            document.dispatchEvent(myEvent);
-            return true;
-        } else {
-            console.error("Error processing user write on server:", response.statusText);
-            return false;
-        }
-    } catch (error) {
-        console.error("Error processing user write on server:", error);
-        return false;
-    }
-}

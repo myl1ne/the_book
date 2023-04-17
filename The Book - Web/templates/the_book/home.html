@@ -12,7 +12,6 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style/the_book/style.css') }}" />
 
 <script type="module" src="{{ url_for('static', filename='js/the_book/effects.js') }}"></script>
-
 <script type="module" src="{{ url_for('static', filename='js/the_book/modals.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/the_book/io.js') }}"></script>
 {% endblock %}
@@ -91,4 +90,11 @@
         </div>
     </div>
 </my_app>
+
+<script type="module">
+    import { registerListeners } from "{{ url_for('static', filename='js/the_book/server.js') }}";
+    document.addEventListener('DOMContentLoaded', function() {
+        registerListeners();
+    });
+</script>
 {% endblock %}

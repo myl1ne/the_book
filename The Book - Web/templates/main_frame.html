@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ghostless Shell: {% block title %}Home{% endblock %}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- TODO Add metatags -->
+
+
     <!-- Logic -->
-    <script>function getCSRFToken() {return document.querySelector('meta[name="csrf-token"]').getAttribute('content');}</script>
+    <script></script>
     <script type="module" src="{{ url_for('static', filename='js/common/firebase.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/common/login.js') }}"></script>
     
