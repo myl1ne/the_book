@@ -1,4 +1,4 @@
-import { getCurrentUser, getUserDocument, moveUserToLocation } from "./firebase.js";
+import { getCurrentUser, getUserDocument, moveUserToLocation } from "../common/firebase.js";
 
 const teleportIcon = document.getElementById("teleport-icon");
 const characterSheetIcon = document.getElementById("character-sheet-icon");

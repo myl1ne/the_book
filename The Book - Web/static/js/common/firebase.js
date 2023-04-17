@@ -156,6 +156,47 @@ export async function getUserDocument(user_id) {
     }
 }
 
+export async function get_authenticated_route(route) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await fetch(route, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${currentToken}`,
+                },
+            });
+            resolve(response);
+        } catch (error) {
+            console.error("Error fetching authenticated route:", error);
+            reject(error);
+        }
+    });
+}
+
+export async function post_to_authenticated_route(route, additionalBody = {}) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let fullBody = {
+                idToken: currentToken,
+            };
+            fullBody = Object.assign(fullBody, additionalBody);
+            const response = await fetch(route, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken(),
+                },
+                body: JSON.stringify(fullBody),
+            });
+            resolve(response);
+        } catch (error) {
+            console.error("Error fetching authenticated route:", error);
+            reject(error);
+        }
+      });
+}
+
 export async function user_watch() {
     try {
         const response = await fetch(`/users/watch`, {

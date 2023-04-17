@@ -14,13 +14,11 @@
     padding: 2rem;
     border-radius: 5px;
     background-color: #111;
-    color: #0F4B0F;
 }
 
 .contact-form input,
 .contact-form textarea {
     background-color: #1A1A1A;
-    color: #0F4B0F;
     border: 1px solid #0F4B0F;
 }
 

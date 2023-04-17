@@ -1,4 +1,4 @@
-import { getCurrentUser, user_writes } from "./firebase.js";
+import { getCurrentUser, user_writes } from "../common/firebase.js";
 import { attractAttention } from "./effects.js";
 
 const sceneImage = document.getElementById("scene-header-image");

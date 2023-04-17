@@ -11,10 +11,8 @@
 <link rel="shortcut icon" href="{{ url_for('static', filename='/images/book_icon.png') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='style/the_book/style.css') }}" />
 
-<script type="module" src="{{ url_for('static', filename='js/the_book/firebase.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/the_book/effects.js') }}"></script>
 
-<script type="module" src="{{ url_for('static', filename='js/the_book/login.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/the_book/modals.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/the_book/io.js') }}"></script>
 {% endblock %}
@@ -22,16 +20,6 @@
 {% block content %}
 <my_app class="custom-scrollbar">
     <div id="main-header" class="custom-scrollbar">
-        <ul>
-            <li>
-                <form id="logout-form" style="display:none;">
-                    <label id="logout-form-user-email"></label>
-                    <button type="submit">Log out</button>
-                </form>
-            </li>
-            <li><a href="/admin/data/clean">Admin: Clean up firestore</a></li>
-            <li><a href="/admin/data/populate_world">Admin: populate world</a></li>
-        </ul>
     </div>
 
     <div id="main-content" class="custom-scrollbar">

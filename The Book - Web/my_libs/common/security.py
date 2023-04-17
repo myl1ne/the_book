@@ -9,13 +9,17 @@ def firebase_auth_checked(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         request.user = {}
-        json_data = request.get_json(silent=True)
-        if not json_data:
-            return f(*args, **kwargs)
-        
-        id_token = request.json.get("idToken")
+        id_token = None
+        if request.method == "POST" and request.json:
+            id_token = request.json.get("idToken")
+        elif request.method == "GET":
+            auth_header = request.headers.get("Authorization")
+            if auth_header:
+                id_token = auth_header.split(" ")[-1]
+
         if not id_token:
             return f(*args, **kwargs)
+
         try:
             decoded_token = auth.verify_id_token(id_token)
             request.user = decoded_token
@@ -28,7 +32,14 @@ def firebase_auth_checked(f):
 def firebase_auth_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        id_token = request.json.get("idToken")
+        id_token = None
+        if request.method == "POST" and request.json:
+            id_token = request.json.get("idToken")
+        elif request.method == "GET":
+            auth_header = request.headers.get("Authorization")
+            if auth_header:
+                id_token = auth_header.split(" ")[-1]
+
         if not id_token:
             return jsonify({"error": "ID token is missing"}), 400
         try:

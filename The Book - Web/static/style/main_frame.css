@@ -118,3 +118,6 @@ header .toggle-button:hover, footer .toggle-button:hover {
     font-size: 18px;
 }
 
+.hidden {
+    display: none;
+}

@@ -12,6 +12,10 @@ def initialize(app):
     team = DreamTeam(id=dream_config["team"], branch_name=dream_config["branch_name"])
     team.initializeTeam(members=dream_config["members"], project_brief=dream_config["project_brief"])
 
+    @app.route("/chat_gpteam", methods=["GET"])
+    def content_chatgpteam():
+        return render_template("/chat_gpteam/home.html")
+
     @app.route("/chat_gpteam/clear", methods=["POST"])
     def chatgpteam_clear():
         team.clear()
