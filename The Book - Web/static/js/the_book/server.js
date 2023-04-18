@@ -51,9 +51,32 @@ export async function moveUserToLocation(location_id) {
     }
 }
 
+export const availableCommands = [
+    "@admin-clean-firestore",
+    "@admin-ideate_world",
+    "@inner-daemon",
+    "@daemon",
+    "@all",
+];
 export async function user_writes(text) {
     try {
-        const response = await post_to_authenticated_route(`/users/write`, {
+        let url = "";
+        if (text === "@admin-clean-firestore") {
+            url = `/admin/data/clean`;
+        }
+        else if (text === "@admin-ideate_world") {
+            url = `/admin/data/populate_world`;
+        } else if (text === "@inner-daemon") {
+            url = `/users/write`;
+        } else if (text === "@daemon") {
+            url = `/users/write`;
+        } else if (text === "@all") {
+            url = `/users/write`;
+        } else {
+            url = `/users/write`;
+        }
+
+        const response = await post_to_authenticated_route(url, {
             'text': text,
         });
         if (response.ok) {

@@ -9,7 +9,7 @@ def initialize(app):
         
     #------------------------------------------------------------------------------------------------------------------#
     # Admin methods
-    @app.route("/admin/data/clean", methods=["GET"])
+    @app.route("/admin/data/clean", methods=["POST"])
     @firebase_auth_required
     def admin_data_clean():
         user_id = request.user['uid']
@@ -28,7 +28,7 @@ def initialize(app):
         }
         return jsonify(response_data)
 
-    @app.route("/admin/data/populate_world", methods=["GET"])
+    @app.route("/admin/data/populate_world", methods=["POST"])
     @firebase_auth_required
     def admin_populate_world():
         user_id = request.user['uid']

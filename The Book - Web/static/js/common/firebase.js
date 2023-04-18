@@ -119,6 +119,7 @@ export async function logUserInServer() {
             if (response.ok) {
                 const data = await response.json();
                 console.log("Server response:", data);
+                currentUser.isAdmin = data.isAdmin;
                 // Use the JSON data in your application
                 return true;
             } else {

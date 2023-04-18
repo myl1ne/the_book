@@ -35,11 +35,13 @@ function onUserLogin() {
     //const isAdmin = await checkIfUserIsAdmin(uid);
 
     // Show or hide admin-only links based on the admin status
-    const adminLinks = document.querySelectorAll('.admin-only');
-    adminLinks.forEach((link) => {
-        link.classList.remove('hidden');
-        //link.style.display = ''; //isAdmin ? '' : 'none';
-    });
+    if (getCurrentUser().isAdmin) {
+        const adminLinks = document.querySelectorAll('.admin-only');
+        adminLinks.forEach((link) => {
+            link.classList.remove('hidden');
+            //link.style.display = ''; //isAdmin ? '' : 'none';
+        });
+    }
 }
 
 function onUserLogout() {

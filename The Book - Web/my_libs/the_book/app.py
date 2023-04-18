@@ -3,7 +3,7 @@ from my_libs.the_book.book import Book
 from my_libs.common.firestore_document import FireStoreDocument
 from my_libs.the_book.user import User
 from my_libs.the_book.inner_daemon import InnerDaemon
-from my_libs.common.security import firebase_auth_required
+from my_libs.common.security import firebase_auth_required, isAdmin
 
 # Helper functions
 def is_user_in_creation_process(user_id):
@@ -43,6 +43,7 @@ def initialize(app):
         response_data = {
             "status": "success",
             "message": "User logged successfully",
+            "isAdmin": isAdmin(user_id),
             "character": user.getDict()['character'],
         }
         return jsonify(response_data)

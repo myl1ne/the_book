@@ -1,5 +1,5 @@
 import { getCurrentUser } from "../common/firebase.js";
-import { user_writes } from "../the_book/server.js";
+import { user_writes, availableCommands } from "../the_book/server.js";
 import { attractAttention } from "./effects.js";
 
 const sceneImage = document.getElementById("scene-header-image");
@@ -181,14 +181,7 @@ document.addEventListener("book-event-content-update", async (event) => {
 
 //Autocomplete logic
 userInputText.addEventListener("keyup", autocomplete);
-const availableCommands = [
-    "@help",
-    "@inventory",
-    "@look",
-    "@move",
-    "@pickup",
-    "@use",
-];
+
 
 export function autocomplete(e) {
     const input = e.target;

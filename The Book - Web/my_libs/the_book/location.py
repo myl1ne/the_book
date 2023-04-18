@@ -16,10 +16,15 @@ class Location(FireStoreDocument):
             'exit_paths':[
                 {
                     'description':'<a description of what the exit looks like (less than 10 words)>',
+                    'riddle':'<a riddle related to the destination, which should be solved>',
                     'destination_id':'<the name of the place this exit leads to (1-3 words)>'
                 }
             ],
             'NPCs':[
+                {
+                    'name':'<the name of a non playable character', 
+                    'description':'<description of the character. (less than 10 words)>',
+                },
                 {
                     'name':'<the name of a non playable character', 
                     'description':'<description of the character. (less than 10 words)>',
