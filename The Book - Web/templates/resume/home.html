@@ -1,0 +1,204 @@
+{% extends "main_frame.html" %}
+
+{% block headers %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style/resume/resume.css') }}" />
+{% endblock %}
+
+{% block title %}Stéphane Lallée{% endblock %}
+
+{% block content %}
+<main class="content-main">
+  <header>
+    <h1>Stéphane Lallée, Ph.D.</h1>
+    <h2>Class: Artificial Intelligence & Robotics Expert</h2>
+    <a href="/contact">Contact</a>
+  </header>
+
+  <section>
+    <h3>Backstory</h3>
+    <p>A passionate explorer of artificial intelligence, neuroscience, and the mind for the last 15 years. Stéphane is a leader who charges with the team, a scientist, and a software engineer with extensive knowledge of machine learning and cognitive technologies.</p>
+  </section>
+
+  <section>
+    <h3>Attributes</h3>
+    <ul>
+      <li><i class="fas fa-code"></i> Software Engineering</li>
+      <li><i class="fas fa-brain"></i> Machine Learning</li>
+      <li><i class="fas fa-network-wired"></i> Deep Learning</li>
+      <li><i class="fas fa-robot"></i> Cognitive Robotics</li>
+      <li><i class="fas fa-eye"></i> Computer Vision</li>
+      <li><i class="fas fa-dna"></i> Neuroscience</li>
+      <li><i class="fas fa-users"></i> Leadership</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>Experience Quests</h3>
+    <dl>
+        <div class="quest">
+            <dt class="date"><span>2022 - Now</span></dt>
+            <dt class="title"><span>Director of Robotics</span></dt>
+            <dd class="company"><i class="fas fa-building"></i> Spoon.ai</dd>
+            <dd class="location"><i class="fas fa-map-marker-alt"></i> Paris, France (remote from Switzerland)</dd>
+            <dd class="skill"><i class="fas fa-laptop-code"></i> Merging the worlds of computer animation & humanoid robots. Lead & Architect.</dd>
+          </div>
+      
+          <div class="quest">
+            <dt class="date"><span>2018 - 2021</span></dt>
+            <dt class="title"><span>Solutions Engineer, R&D</span></dt>
+            <dd class="company"><i class="fas fa-building"></i> Facebook</dd>
+            <dd class="location"><i class="fas fa-map-marker-alt"></i> Menlo Park, USA</dd>
+            <dd class="skill"><i class="fas fa-laptop-code"></i> Project Management, Creative Insights, Tech Lead, Hackathon Lead, ML Evangelist.</dd>
+          </div>
+      
+          <div class="quest">
+            <dt class="date"><span>2017 - 2018</span></dt>
+            <dt class="title"><span>Solutions Engineer</span></dt>
+            <dd class="company"><i class="fas fa-building"></i> Facebook</dd>
+            <dd class="location"><i class="fas fa-map-marker-alt"></i> Singapore</dd>
+            <dd class="skill"><i class="fas fa-laptop-code"></i> SMB in APAC, Digital Marketing & Commerce, Engineering, ML Evangelist.</dd>
+          </div>
+      
+          <div class="quest">
+            <dt class="date"><span>2016 - 2017</span></dt>
+            <dt class="title"><span>Founder</span></dt>
+            <dd class="company"><i class="fas fa-building"></i> Entrepreneur First / MeeYoo</dd>
+            <dd class="location"><i class="fas fa-map-marker-alt"></i> Singapore</dd>
+            <dd class="skill"><i class="fas fa-laptop-code"></i> Startups, Entrepreneurship World, Design Thinking.</dd>
+          </div>
+      
+          <div class="quest">
+            <dt class="date"><span>2014 - 2016</span></dt>
+            <dt class="title"><span>Scientist</span></dt>
+            <dd class="company"><i class="fas fa-building"></i> A*STAR</dd>
+            <dd class="location"><i class="fas fa-map-marker-alt"></i> Singapore</dd>
+            <dd class="skill"><i class="fas fa-laptop-code"></i> Technology Research, Computer Vision, Neuroscience, Teaching.</dd>
+          </div>
+          
+          <div class="quest">
+            <dt class="date"><span>2012 - 2014</span></dt>
+            <dt class="title"><span>Post Doc</span></dt>
+            <dd class="company"><i class="fas fa-building"></i> University Pompeu Fabra (SPECS)</dd>
+            <dd class="location"><i class="fas fa-map-marker-alt"></i> Barcelona, Spain</dd>
+            <dd class="skill"><i class="fas fa-laptop-code"></i> Developmental Robotics, Tech Lead, Teaching.</dd>
+          </div>
+
+          <div class="quest">
+            <dt class="date"><span>2008 - 2012</span></dt>
+            <dt class="title"><span>Scientist</span></dt>
+            <dd class="company"><i class="fas fa-building"></i> PhD in Neuroscience & Robotics</dd>
+            <dd class="location"><i class="fas fa-map-marker-alt"></i> Lyon, France</dd>
+            <dd class="skill"><i class="fas fa-laptop-code"></i> Developmental Robotics, Cognitive Science, Neuroscience, Biology.</dd>
+          </div>     
+    </dl>
+  </section>
+
+  <section>
+    <h3>Education</h3>
+    <ul>
+        <li>
+            <span class="date">2012</span>
+            <span class="education-icon"><i class="fas fa-graduation-cap"></i></span>
+            <span class="education-info">Ph.D. Neuroscience & Robotics - INSERM, France</span>
+        </li>
+        <li>
+            <span class="date">2008</span>
+            <span class="education-icon"><i class="fas fa-graduation-cap"></i></span>
+            <span class="education-info">Master of Cognitive Science - University of Lyon, France</span>
+        </li>
+        <li>
+            <span class="date">2006</span>
+            <span class="education-icon"><i class="fas fa-graduation-cap"></i></span>
+            <span class="education-info">Bachelor of Computer Science - University of Lille, France</span>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>Skills & Spells</h3>
+    <ul>
+      <li>
+        <span class="skill-title"><i class="fas fa-brain"></i> ML/Data</span>
+        <ul class="skill-list">
+          <li>Python</li>
+          <li>PyTorch</li>
+          <li>Designed my first neural net in 2008</li>
+        </ul>
+      </li>
+      <li>
+        <span class="skill-title"><i class="fas fa-gamepad"></i> 3D/Gaming</span>
+        <ul class="skill-list">
+          <li>Unity</li>
+          <li>C#</li>
+          <li>Pixi.js</li>
+        </ul>
+      </li>
+      <li>
+        <span class="skill-title"><i class="fas fa-globe"></i> Web</span>
+        <ul class="skill-list">
+          <li>PHP</li>
+          <li>JS</li>
+          <li>Flask</li>
+        </ul>
+      </li>
+      <li>
+        <span class="skill-title"><i class="fas fa-cloud"></i> Cloud</span>
+        <ul class="skill-list">
+          <li>Google Cloud</li>
+          <li>Firebase</li>
+        </ul>
+      </li>
+      <li>
+        <span class="skill-title"><i class="fas fa-shield-alt"></i> Cybersecurity</span>
+        <ul class="skill-list">
+          <li>Participated in a few CTF</li>
+          <li>Cracked a few WEP keys</li>
+          <li>Often fiddle with Chrome inspect</li>
+        </ul>
+      </li>
+      <li>
+        <span class="skill-title"><i class="fas fa-robot"></i> Robotic Frameworks</span>
+        <ul class="skill-list">
+          <li>YARP</li>
+          <li>ROS</li>
+        </ul>
+      </li>
+      <li>
+        <span class="skill-title"><i class="fas fa-mobile-alt"></i> Mobile</span>
+        <ul class="skill-list">
+          <li>Basic knowledge of Android</li>
+        </ul>
+      </li>
+      <li>
+        <span class="skill-title"><i class="fas fa-desktop"></i> OS</span>
+        <ul class="skill-list">
+          <li>Windows</li>
+          <li>Linux</li>
+        </ul>
+      </li>
+      <li>
+        <span class="skill-title"><i class="fas fa-comments"></i> Human languages</span>
+        <ul class="skill-list">
+          <li>French</li>
+          <li>English</li>
+          <li>Spanish</li>
+          <li>German (notions)</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+  
+
+  <section>
+    <h3>Achievements</h3>
+    <ul>
+      <li><i class="fas fa-tasks"></i> Successfully managed projects and teams in various domains of AI and robotics</li>
+      <li><i class="fas fa-trophy"></i> Led hackathons and machine learning initiatives at Facebook</li>
+      <li><i class="fas fa-lightbulb"></i> Developed innovative solutions for computer vision and cognitive robotics</li>
+      <li><i class="fas fa-flask"></i> Strong background in neuroscience and cognitive science research</li>
+      <li><i class="fas fa-chalkboard-teacher"></i> Experienced mentor and teacher in both academic and professional settings</li>
+      <li><i class="fas fa-comment-dots"></i> Skilled in communicating with advanced language models & designing parametric prompts</li>
+    </ul>
+  </section>
+</main>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "main_frame.html" %}
+
+{% block title %}Chat GPTeam{% endblock %}
+
+{% block headers %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style/chat_gpteam/chat_gpteam.css') }}" />
+{% endblock %}
+
+{% block content %}
+<main class="content-main">
+    <h1>ChatGPTeam: A dream team of AI at your service</h1>
+    <button id="clear-button">Clear</button>
+    <button id="run-button">Run</button>
+</main>
+<script type="module">
+    import { registerListeners } from "{{ url_for('static', filename='js/chat_gpteam/chat_gpteam.js') }}";
+    document.addEventListener('DOMContentLoaded', function() {
+        registerListeners();
+    });
+</script>
+{% endblock %}

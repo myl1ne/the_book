@@ -1,4 +1,5 @@
-import { getCurrentUser, getUserDocument, moveUserToLocation } from "./firebase.js";
+import { getCurrentUser, getUserDocument } from "../common/firebase.js";
+import { moveUserToLocation } from "../the_book/server.js";
 
 const teleportIcon = document.getElementById("teleport-icon");
 const characterSheetIcon = document.getElementById("character-sheet-icon");
@@ -55,6 +56,6 @@ window.onclick = (event) => {
 
 document.getElementById('teleport-btn').addEventListener('click', () => {
     const selectedLocation = document.getElementById('teleport-location').value;
-    moveUserToLocation( getCurrentUser().uid, selectedLocation);
+    moveUserToLocation(selectedLocation);
     closeAllModals();
 });
