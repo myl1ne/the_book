@@ -40,6 +40,11 @@ def index():
 def content_the_book():
     return render_template("/the_book/home.html")
 
+@app.route("/resume", methods=["GET"])
+@firebase_auth_checked
+def content_resume():
+    return render_template("/resume/home.html")
+
 @app.route("/contact", methods=["GET", "POST"])
 @firebase_auth_checked
 def content_contact():

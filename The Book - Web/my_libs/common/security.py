@@ -43,7 +43,7 @@ def firebase_auth_required(f):
         if not id_token:
             return jsonify({"error": "ID token is missing"}), 400
         try:
-            decoded_token = auth.verify_id_token(id_token)
+            decoded_token = auth.verify_id_token(id_token,check_revoked=False)
             request.user = decoded_token
         except Exception as e:
             Log.error(f"Error while verifying ID token: {str(e)}")
