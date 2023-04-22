@@ -55,6 +55,11 @@ def isAdmin(id):
     if not id:
         return False
     roles = FireStoreDocument('configurations','roles')
+    user_role = None
     if roles.exists:
-        user_role = roles.getPath(f"ids2role.{id}")
+        try:
+            user_role = roles.getPath(f"ids2role.{id}")
+        except Exception as e:
+            Log.error(f"Error while getting role for user {id}: {str(e)}")
+            return False
     return bool(user_role == "admin")
