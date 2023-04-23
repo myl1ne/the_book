@@ -52,7 +52,23 @@ class BucketStorage:
         # return the URL of the image
         blob.make_public()
         return blob.public_url
+    
+    def host_file(self, local_path, remote_path, delete_local=True):
+        """
+        Hosts a file and retrieve its URL.
 
+        :param local_path: the path to the file to host
+        :return: the public URL for the image
+        """
+        # now upload the image to firebase
+        blob = self.__bucket.blob(remote_path)
+        blob.upload_from_filename(local_path)
+        if delete_local:
+            os.remove(local_path)
+
+        # return the URL of the image
+        blob.make_public()
+        return blob.public_url
     
     def fetch_and_host_image(self, url:str)->str:
         """

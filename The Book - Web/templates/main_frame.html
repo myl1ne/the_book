@@ -12,7 +12,8 @@
     <script></script>
     <script type="module" src="{{ url_for('static', filename='js/common/firebase.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/common/login.js') }}"></script>
-    
+    <script type="module" src="{{ url_for('static', filename='js/common/main_frame.js') }}"></script>
+
     <!-- Styling -->
     <link rel="shortcut icon" href="{{ url_for('static', filename='/images/book_icon.png', _external=True) }}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -25,12 +26,13 @@
 <body>
     <div id="body-overlay">
     </div>        
-    <div id="body-content">
+    <div id="body-content" class="custom-scrollbar">
         <header>
             <nav class="nav-drawer">
                 <ul>
                     <li><a href="/">Home</a></li>
                     <li><a href="/the_book">The Book</a></li>
+                    <button id="main-frame-btn-speak">Speak</button>
 
                     <li class="admin-only hidden"><a href="/persona/cassandra/">Persona (Cassandra)</a></li>
                     <li class="admin-only hidden"><a href="/chat_gpteam">ChatGPTeam</a></li>
@@ -46,7 +48,7 @@
             </nav>
             <button class="toggle-button"><i class="fas fa-chevron-up"></i></button>
         </header>
-        <main>
+        <main class="custom-scrollbar">
             {% block content %}
 
             {% endblock %}
@@ -63,55 +65,6 @@
         </footer>
     </div>
     <script>
-        function headerFooterClose() {
-            document.getElementById('body-content').className = 'collapsed-both';
-            let nav = document.querySelector('.nav-drawer');
-            nav.style.display = 'none';
-            nav.parentElement.classList.add('collapsed');
-            let foot = document.querySelector('.footer-drawer');
-            foot.style.display = 'none';
-            foot.parentElement.classList.add('collapsed');
-            const toggleButtons = document.querySelectorAll('.toggle-button');
-            toggleButtons.forEach((btn) => {
-                if (btn.parentElement.tagName === 'HEADER') {
-                    btn.querySelector('i').className = 'fas fa-chevron-down';
-                } else if (btn.parentElement.tagName === 'FOOTER') {
-                    btn.querySelector('i').className = 'fas fa-chevron-up';
-                }
-            });
-        }
-
-        function headerFooterOpen() {
-            document.getElementById('body-content').className = '';
-            let nav = document.querySelector('.nav-drawer');
-            nav.style.display = 'flex';
-            nav.parentElement.classList.remove('collapsed');
-            let foot = document.querySelector('.footer-drawer');
-            foot.style.display = 'flex';
-            foot.parentElement.classList.remove('collapsed');
-            const toggleButtons = document.querySelectorAll('.toggle-button');
-            toggleButtons.forEach((btn) => {
-                if (btn.parentElement.tagName === 'HEADER') {
-                    btn.querySelector('i').className = 'fas fa-chevron-up';
-                } else if (btn.parentElement.tagName === 'FOOTER') {
-                    btn.querySelector('i').className = 'fas fa-chevron-down';
-                }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleButtons = document.querySelectorAll('.toggle-button');
-            toggleButtons.forEach((btn) => {
-                btn.addEventListener('click', function() {
-
-                    if (btn.parentElement.classList.contains('collapsed')){
-                        headerFooterOpen();
-                    } else {
-                        headerFooterClose();
-                    }
-                });
-            });
-        });
     </script>
 </body>
 </html>

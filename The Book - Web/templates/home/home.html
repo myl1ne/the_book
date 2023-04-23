@@ -15,18 +15,4 @@
     <br>
     <p>The main public section is "The Book", which is an attempt at using large language models for MUD style game. Feel free to create an account and try.</p>
 </main>
-
-<script type="module">
-    import { UnityCanvas } from "{{ url_for('static', filename='js/common/unity_canvas.js') }}";
-    
-    const isDevelopment = false;
-    console.log("Loading Spoon Canvas");
-    var unityCanvas = new UnityCanvas(document.getElementById("body-overlay"), "Overlaid3DContent", isDevelopment);
-
-    window.addEventListener("WorldEventOnCreated", (e) => {
-        console.log("World is loaded and ready to be used");
-            console.log("Spawning a cursor");
-            unityCanvas.forwardCursorToUnity();
-    });
-</script>
 {% endblock %}
