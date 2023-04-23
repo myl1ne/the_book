@@ -21,46 +21,50 @@
     <!-- Templates -->
     {% block headers %} {% endblock %}
 </head>
+
 <body>
-    <header>
-        <nav class="nav-drawer">
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/the_book">The Book</a></li>
-
-                <li class="admin-only hidden"><a href="/persona/cassandra/">Persona (Cassandra)</a></li>
-                <li class="admin-only hidden"><a href="/chat_gpteam">ChatGPTeam</a></li>
+    <div id="body-overlay">
+    </div>        
+    <div id="body-content">
+        <header>
+            <nav class="nav-drawer">
                 <ul>
-                    <li>
-                        <form id="logout-form" style="display:none;">
-                            <label id="logout-form-user-email"></label>
-                            <button type="submit">Log out</button>
-                        </form>
-                    </li>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/the_book">The Book</a></li>
+
+                    <li class="admin-only hidden"><a href="/persona/cassandra/">Persona (Cassandra)</a></li>
+                    <li class="admin-only hidden"><a href="/chat_gpteam">ChatGPTeam</a></li>
+                    <ul>
+                        <li>
+                            <form id="logout-form" style="display:none;">
+                                <label id="logout-form-user-email"></label>
+                                <button type="submit">Log out</button>
+                            </form>
+                        </li>
+                    </ul>
                 </ul>
-            </ul>
-        </nav>
-        <button class="toggle-button"><i class="fas fa-chevron-up"></i></button>
-    </header>
-    <main>
-        {% block content %}
+            </nav>
+            <button class="toggle-button"><i class="fas fa-chevron-up"></i></button>
+        </header>
+        <main>
+            {% block content %}
 
-        {% endblock %}
-    </main>
-    <footer>
-        <button class="toggle-button"><i class="fas fa-chevron-down"></i></button>
-        <div class="footer-drawer">
-            <ul>
-                <li><a href="/resume">Myself</a></li>
-                <li><a href="/contact">Contact</a></li>
-                <li><a href="https://www.buymeacoffee.com/myl1ne">Buy me a coffee</a></li>
-            </ul>
-        </div>
-    </footer>
-
+            {% endblock %}
+        </main>
+        <footer>
+            <button class="toggle-button"><i class="fas fa-chevron-down"></i></button>
+            <div class="footer-drawer">
+                <ul>
+                    <li><a href="/resume">Myself</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="https://www.buymeacoffee.com/myl1ne">Buy me a coffee</a></li>
+                </ul>
+            </div>
+        </footer>
+    </div>
     <script>
         function headerFooterClose() {
-            document.querySelector('body').className = 'collapsed-both';
+            document.getElementById('body-content').className = 'collapsed-both';
             let nav = document.querySelector('.nav-drawer');
             nav.style.display = 'none';
             nav.parentElement.classList.add('collapsed');
@@ -78,7 +82,7 @@
         }
 
         function headerFooterOpen() {
-            document.querySelector('body').className = '';
+            document.getElementById('body-content').className = '';
             let nav = document.querySelector('.nav-drawer');
             nav.style.display = 'flex';
             nav.parentElement.classList.remove('collapsed');
