@@ -84,8 +84,12 @@ export async function updateContent(imageUrl, title, daemonName, text, textType,
         resolve();
       }, { once: true });
   
-      setTimeout(() => {
+      function startAnimation() {
         wordElement.style.animationDelay = "0s";
+      }
+  
+      setTimeout(() => {
+        requestAnimationFrame(startAnimation);
       }, delay);
     });
   }
@@ -171,7 +175,12 @@ document.addEventListener("book-event-content-update", async (event) => {
         console.error("Unknown daemon message type:", typeof event.detail.daemon_message);
         text = "The daemon speaks in tongues.";
     }
-
+    try {
+        document.unityCanvas.nativeBridge.entity_Say("Myline", text, "jaina", "en");
+    }
+    catch (e) {
+        console.error("Unity not loaded // TTS not supported", e);
+    }
     await updateContent(event.detail.image_url, event.detail.location_name, event.detail.daemon_name, text, event.detail.type??"", 10);
 
     // Enable input

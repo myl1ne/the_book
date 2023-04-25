@@ -10,3 +10,4 @@ Pillow~=9.4.0
 google-cloud-storage~=2.7.0
 json5~=0.9.11
 PyGithub~=1.58.1
+TTS

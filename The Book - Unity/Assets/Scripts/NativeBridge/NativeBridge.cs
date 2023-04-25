@@ -160,7 +160,7 @@ public class NativeBridge : MonoBehaviour
         }
         #endregion
 
-        #region Attention
+        #region Attention & Motion
         [System.Serializable]
         public class EntityActionLookAtTarget : EntitySerializedMethod
         {
@@ -170,6 +170,16 @@ public class NativeBridge : MonoBehaviour
 
         [System.Serializable]
         public class EntityActionLookAtClear : EntitySerializedMethod
+        {
+        }
+        [System.Serializable]
+        public class EntityActionMoveToTarget : EntitySerializedMethod
+        {
+            public string targetName;
+        }
+
+        [System.Serializable]
+        public class EntityActionMoveClear : EntitySerializedMethod
         {
         }
         #endregion
@@ -409,16 +419,50 @@ public class NativeBridge : MonoBehaviour
     [Button]
     public void EntityActionLookAtTarget(SDK.EntityActionLookAtTarget _data)
     {
-        var lookatCtrl = m_world.GetEntityByName(_data.entityName).GetComponentInChildren<RealisticEyeMovements.LookTargetController>();
+        var ctrl = m_world.GetEntityByName(_data.entityName).GetComponentInChildren<GazeController>();
+        if (ctrl == null)
+        {
+            Logger.Log("NativeBridge", $"Entity {_data.entityName} does not have a gaze controller", Logger.Level.Error);
+            return;
+        }
         var lookAtTarget = m_world.GetEntityByName(_data.targetName);
-        lookatCtrl.LookAtPoiDirectly(lookAtTarget.transform, _data.duration.GetValueOrDefault(-1.0f));
+        ctrl.LockTarget(lookAtTarget.transform);
     }
 
     [Button]
     public void EntityActionLookAtClear(SDK.EntityActionLookAtClear _data)
     {
-        var lookatCtrl = m_world.GetEntityByName(_data.entityName).GetComponentInChildren<RealisticEyeMovements.LookTargetController>();
-        lookatCtrl.ClearLookTarget();
+        var ctrl = m_world.GetEntityByName(_data.entityName).GetComponentInChildren<GazeController>();
+        if (ctrl == null)
+        {
+            Logger.Log("NativeBridge", $"Entity {_data.entityName} does not have a gaze controller", Logger.Level.Error);
+            return;
+        }
+        ctrl.ClearTarget();
+    }
+    [Button]
+    public void EntityActionMoveToTarget(SDK.EntityActionMoveToTarget _data)
+    {
+        var ctrl = m_world.GetEntityByName(_data.entityName).GetComponentInChildren<MotionController>();
+        if (ctrl == null)
+        {
+            Logger.Log("NativeBridge", $"Entity {_data.entityName} does not have a motion controller", Logger.Level.Error);
+            return;
+        }
+        var target = m_world.GetEntityByName(_data.targetName);
+        ctrl.SetTarget(target.transform);
+    }
+
+    [Button]
+    public void EntityActionMoveClear(SDK.EntityActionMoveClear _data)
+    {
+        var ctrl = m_world.GetEntityByName(_data.entityName).GetComponentInChildren<MotionController>();
+        if (ctrl == null)
+        {
+            Logger.Log("NativeBridge", $"Entity {_data.entityName} does not have a motion controller", Logger.Level.Error);
+            return;
+        }
+        ctrl.ClearTarget();
     }
     #endregion
 

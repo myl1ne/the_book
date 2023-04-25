@@ -1,0 +1,11 @@
+[
+    {
+      "origin": [
+        "http://127.0.0.1:5000",
+        "https://the-book-jh4l6rdb6a-ew.a.run.app/"
+        ],
+      "method": ["GET"],
+      "responseHeader": ["Content-Type", "access-control-expose-headers"],
+      "maxAgeSeconds": 3600
+    }
+]

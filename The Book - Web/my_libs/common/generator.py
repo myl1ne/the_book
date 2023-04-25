@@ -3,6 +3,7 @@ import os
 from my_libs.common.logger import Log
 from my_libs.common.bucket_storage import BucketStorage
 from my_libs.common.firestore_document import FireStoreDocument
+from TTS.api import TTS
 import concurrent.futures
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -10,6 +11,7 @@ class Generator:
     __bucket_storage = None
     __visual_generation_config = None
     __llm_config = None
+    __tts_client = None
 
     def __init__(self) -> None:
         if Generator.__bucket_storage is None:
@@ -22,6 +24,10 @@ class Generator:
         if Generator.__llm_config is None:
             Generator.__llm_config = FireStoreDocument('configurations', 'large_language_model').getDict()
             Log.info(f"llm config: {Generator.__llm_config}")
+        
+        
+        if Generator.__tts_client is None:
+            Generator.__tts_client = TTS(model_name=TTS.list_models()[0], progress_bar=False, gpu=False)
 
     def ask_large_language_model(self, messages):
         Log.debug("ask_large_language_model...")
@@ -60,3 +66,17 @@ class Generator:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             results = list(executor.map(self.generate2DwithMetadata, prompts, [size_override] * len(prompts), [additional_suffixes] * len(prompts)))
         return results
+
+    def generate_speech(self, sentence: str, locale: str = "en", voice: str = "default"):
+        filename = Generator.__bucket_storage.generate_unique_filename("wav")
+        upload_path = "tmp/generated/"
+        if not os.path.exists(upload_path):
+            os.makedirs(upload_path)
+        upload_path += filename
+
+        Generator.__tts_client.tts_to_file(sentence,
+                                  speaker_wav="my_libs/common/resources/tts_voice_samples/" + voice + "/neutral.wav",
+                                  language=locale,
+                                  file_path=upload_path)
+
+        return Generator.__bucket_storage.host_file(local_path=upload_path,remote_path=filename, delete_local=False)

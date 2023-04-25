@@ -1,3 +1,5 @@
+import { post_to_authenticated_route } from './firebase.js';
+
 //TODO Maybe there is a way to autogenerate this file from the C# code
 export class NativeBridge {
     
@@ -83,16 +85,47 @@ export class NativeBridge {
         });
         this.callSeralizedMethod(serMeth);
     }
-    
-    entity_Say(entityName, textToSay, voice = "chloe-en", language = "en") {
+
+    entity_MoveTo_Target(agentName, targetName, duration = -1.0) {
         const serMeth = JSON.stringify({
-            methodName: "EntityActionSay",
-            entityName: entityName,
-            text: textToSay,
-            voice: voice,
-            language: language,
+            methodName: "EntityActionMoveToTarget",
+            entityName: agentName,
+            targetName: targetName,
+            duration: duration,
         });
         this.callSeralizedMethod(serMeth);
+    }
+    
+    entity_Move_Clear(agentName) {
+        const serMeth = JSON.stringify({
+            methodName: "EntityActionMoveClear",
+            entityName: agentName,
+        });
+        this.callSeralizedMethod(serMeth);
+    }
+
+    async entity_Say(entityName, textToSay, voice = "jaina", language = "en") {
+        //const serMeth = JSON.stringify({
+        //    methodName: "EntityActionSay",
+        //    entityName: entityName,
+        //    text: textToSay,
+        //    voice: voice,
+        //    language: language,
+        //});
+        //this.callSeralizedMethod(serMeth);
+               
+        return new Promise(async (resolve, reject) => {
+            const response = await post_to_authenticated_route(`/api/say`, { 'text': textToSay, 'voice': voice, 'language': language });
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Server response:", data);
+                document.unityCanvas.nativeBridge.entity_Play_Sound("Myline", data.url);
+                resolve(data.url);
+            } else {
+                console.error("Error:", response.statusText);
+                reject(response.statusText);
+            }
+        });
     }
 
     entity_Play_Sound(entityName, soundUrl) {
