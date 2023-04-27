@@ -200,7 +200,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1479903119, guid: 748c16668145e824585189f596d6e41a, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1910170881, guid: 748c16668145e824585189f596d6e41a, type: 3}
       propertyPath: m_IsActive
@@ -212,7 +212,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1910170884, guid: 748c16668145e824585189f596d6e41a, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2124370853917218650, guid: 748c16668145e824585189f596d6e41a, type: 3}
       propertyPath: m_Avatar
@@ -225,6 +225,10 @@ PrefabInstance:
     - target: {fileID: 2124370854579810522, guid: 748c16668145e824585189f596d6e41a, type: 3}
       propertyPath: inspSalsaLinked
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2314944107298674123, guid: 748c16668145e824585189f596d6e41a, type: 3}
+      propertyPath: orthographic
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2314944108742361385, guid: 748c16668145e824585189f596d6e41a, type: 3}
       propertyPath: m_Name

@@ -9,6 +9,7 @@ from my_libs.common.security import firebase_auth_checked, firebase_auth_require
 from my_libs.the_book.app import initialize as initialize_the_book
 from my_libs.persona.app import initialize as initialize_persona
 from my_libs.chat_gpteam.app import initialize as initialize_chat_gpteam
+from flask_restplus import Api, Resource, fields
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
@@ -21,6 +22,14 @@ app.config['MAIL_PASSWORD'] = os.environ.get('THE_BOOK_MAIL_PASSWORD')
 mail = Mail(app)
 csrf = CSRFProtect(app)
 
+# Define the API
+api = Api(app, version='1.0', title='Ghostless Shell API', description='An API to run ghosts...')
+# Define a namespace for your route
+ns_ghostless = api.namespace('ghostless', description='Everything that is common')
+ns_book = api.namespace('the_book', description='Everything related to The Book project')
+ns_persona = api.namespace('persona', description='Everything related to Persona project')
+ns_chatgpteam = api.namespace('chat_gpteam', description='Everything related to ChatGPTeam project')
+#
 #------------------------------------------------------------------------------------------------------------------#
 app.is_ready = False
 initialize_common(app)
