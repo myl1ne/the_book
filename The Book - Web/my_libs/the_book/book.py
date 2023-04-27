@@ -99,8 +99,7 @@ class Book:
         }
         return response_data
 
-    def process_user_write(self, user_id, text):
-        Log.info(f'Process write of {user_id}')
+    def write_handler_daemon(self, user_id, text):
         user = User(user_id)
         user_dict = user.getLiteCharacterDict()
 
@@ -179,4 +178,47 @@ class Book:
                 "location_name": location_dict['name'],
                 "image_url": location_dict['image_url']
         }
+
+    def write_handler_inner_daemon(self, user_id, text):
+        user = User(user_id)
+        user_dict = user.getLiteCharacterDict()
+        inner_dae = InnerDaemon(user_dict['character']['inner_daemon_id'])
+        return inner_dae.process_user_summon(user_dict, text)
+
+    def write_handler_chat(self, user_id, text):
+        return {
+                "status": "success",
+                "type": "handling-error",
+                "daemon_message": "Chat is not implemented yet",
+                "daemon_name": "Chat",
+        }
+
+    def process_user_write(self, user_id, text):
+        Log.info(f'Process write of {user_id}')
+        user = User(user_id)
+        user_dict = user.getLiteCharacterDict()
+        location = Location(user_dict['current_location'])
+        if not location.exists():
+            location_dict = self.create_new_location(user_dict['current_location'])
+        else:
+            location_dict = location.getDict()
+        dae = Daemon(location_dict['daemon'])
+        dae_dict = dae.getDict()
+
+        base_data = {
+            "status": "success",
+            "type": "handling-error",
+            "daemon_message": "...",
+            "daemon_name": dae_dict['name'],
+            "location_name": location_dict['name'],
+            "image_url": location_dict['image_url']
+        }
+        if (text.startswith('@')):
+            if (text.startswith('@daemon')):
+                response_data = base_data.update(self.write_handler_daemon(user_id, text))
+            if (text.startswith('@inner_daemon')):
+                response_data = base_data.update(self.write_handler_inner_daemon(user_id, text))
+        else:
+            response_data = base_data.update(self.write_handler_chat(user_id, text))
+        return response_data
     

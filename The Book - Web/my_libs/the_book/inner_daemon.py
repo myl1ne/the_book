@@ -105,8 +105,20 @@ class InnerDaemon(FireStoreDocument, Generator):
         return response_data
 
     def process_user_summon(self, text):
-        #TODO
-        pass
+        daeDict = self.getDict()
+        messages = daeDict['messages']['chat']
+        msgs_to_add = [
+            {"role": "user", "content": text},
+        ]
+        messages += msgs_to_add
+        (answer, _token_count) = self.ask_large_language_model(messages)
+        messages += [{'role':'assistant', 'content':answer}]
+        self.register_summons(self, messages)
+        return {
+            "status": "success",
+            "type": "dialog",
+            "daemon_message": answer,
+        }
 
     @staticmethod
     def get_daemon_character_creation_steps(custom_traits_count = 0):
