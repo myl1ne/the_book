@@ -15,4 +15,9 @@
     <br>
     <p>The main public section is "The Book", which is an attempt at using large language models for MUD style game. Feel free to create an account and try.</p>
 </main>
+
+<script type = "module">
+    import { Agent } from "{{ url_for('static', filename='js/common/conversational_agent.js') }}";
+    document.the_book.myline = new Agent( 'body-overlay', 'Myline' );
+</script>
 {% endblock %}

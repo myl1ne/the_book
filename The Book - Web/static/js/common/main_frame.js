@@ -1,50 +1,20 @@
 import { post_to_authenticated_route } from './firebase.js';
-import { UnityCanvas } from './unity_canvas.js';
+import { Agent } from './conversational_agent.js';
 
+
+if (!document.the_book) {
+    document.the_book = {
+        agents: {},
+    };
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     setupHeaderFooter();
-    setupUnity();
     setupNavBarButtons();
 });
 
-function setupUnity() {
-    
-    const isDevelopment = false;
-    console.log("Loading Spoon Canvas");
-    document.unityCanvas = new UnityCanvas(document.getElementById("body-overlay"), "Overlaid3DContent", isDevelopment);
-
-    window.addEventListener("WorldEventOnCreated", (e) => {
-        console.log("World is loaded and ready to be used");
-        document.unityCanvas.forwardCursorToUnity();
-        
-        document.unityCanvas.nativeBridge.world_CreateOrUpdateEntity(
-            "NavigationTarget",
-            "Generic3D",
-            "ThreeD",
-            { x: 0.0, y: 0.0, z: 0.0 },
-            { x: 0.25, y: 0.25, z: 0.25 },
-            { x: 0.0, y: 0.0, z: 0.0 },
-        );
-        //Making Myline the right size and out of scren
-        document.unityCanvas.nativeBridge.world_CreateOrUpdateEntity(
-            "Myline",
-            null,
-            "ThreeD",
-            { x: 0.0, y: 0.0, z: 0.0 },
-            { x: 2.5, y: 2.5, z: 2.5 },
-            { x: 0.0, y: 0.0, z: 180.0 },
-        );
-        document.unityCanvas.nativeBridge.entity_MoveTo_Target("Myline", "NavigationTarget");
-    });
-}
-
 function setupNavBarButtons() {
     const button = document.getElementById('main-frame-btn-speak');
-    button.addEventListener('click', async () => {
-        button.disabled = true;
-        document.unityCanvas.nativeBridge.entity_Say("Myline", "This is a test.", "jaina", "en" );
-    });
 }
 
 function headerFooterClose() {

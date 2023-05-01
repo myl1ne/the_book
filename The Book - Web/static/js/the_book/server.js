@@ -55,8 +55,7 @@ export const availableCommands = [
     "@admin-clean-firestore",
     "@admin-ideate_world",
     "@inner-daemon",
-    "@daemon",
-    "@all",
+    "@daemon"
 ];
 export async function user_writes(text) {
     try {
@@ -66,11 +65,7 @@ export async function user_writes(text) {
         }
         else if (text === "@admin-ideate_world") {
             url = `/admin/data/populate_world`;
-        } else if (text === "@inner-daemon") {
-            url = `/users/write`;
-        } else if (text === "@daemon") {
-            url = `/users/write`;
-        } else if (text === "@all") {
+        } else if (text === "@inner-daemon" || text === "@daemon" || text === "@all") {
             url = `/users/write`;
         } else {
             url = `/users/write`;

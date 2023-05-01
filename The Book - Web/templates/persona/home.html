@@ -7,27 +7,37 @@
 {% block title %}Persona{% endblock %}
 
 {% block content %}
-<main class="content-main">
+<main id="content-main">
     <h1>{{ persona_id }}</h1>
-    <div class="chat-window" id="chat-window">
-        <!-- Messages will be added dynamically -->
-    </div>
-    <form id="message-form">
-        <label for="message">Message:</label>
-        <input type="text" id="message" name="message">
-        <button type="submit">Send</button>
-    </form>
-
-    <div class="episodes-list" id="episodes-list">
-        <!-- Episodes will be added dynamically -->
-    </div>
     
-    <button id="load-episodes">Load Episodes</button>
+    <div id = "interaction-container">
+        <div id = "persona-container">
+            <div class="chat-window custom-scrollbar" id="chat-window">
+                <!-- Messages will be added dynamically 
+                <div class = "message user">The user said foo</div>>
+                <div class = "message persona">The persona said bar</div>>
+                <div class = "message system">The system said said beep</div>>
+                -->
+            </div>
+            <div id = "persona-canvas">
+            </div>
+        </div>
+        <form id="message-form">
+            <input type="text" id="message" name="message">
+            <div id="controller-buttons">
+                <button type="button" class="toggle-media-button" id="camera-toggle">
+                    <i class="fas fa-video"></i>
+                  </button>
+                  <button type="button" class="toggle-media-button" id="microphone-toggle">
+                    <i class="fas fa-microphone"></i>
+                  </button>
+            </div>
+        </form>
+    </div>
 </main>
 
 <script type="module">
     import { registerListeners } from "{{ url_for('static', filename='js/persona/persona.js') }}";
-    
     document.addEventListener('DOMContentLoaded', function() {
         registerListeners("{{ persona_id }}");
     });
