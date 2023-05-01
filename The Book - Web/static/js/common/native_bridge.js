@@ -119,7 +119,7 @@ export class NativeBridge {
             if (response.ok) {
                 const data = await response.json();
                 console.log("Server response:", data);
-                document.unityCanvas.nativeBridge.entity_Play_Sound("Myline", data.url);
+                this.entity_Play_Sound("Myline", data.url);
                 resolve(data.url);
             } else {
                 console.error("Error:", response.statusText);

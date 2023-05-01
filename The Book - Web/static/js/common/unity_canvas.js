@@ -8,7 +8,8 @@ export class UnityCanvas {
         this.config = {};
 
         //Find the "local domain" where the script is executed
-        this.config.executionUrl = new URL(import.meta.url);
+        //this.config.executionUrl = new URL(import.meta.url);
+        this.config.executionUrl = "../.."
 
         //Config that could come from Unity Build
         this.config.projectName = "unity";
@@ -16,12 +17,12 @@ export class UnityCanvas {
         this.config.productName = "The Book";
         this.config.productVersion = "0.1";
         
-        this.config.buildUrl = "static/unity/Build";
+        this.config.buildUrl = this.config.executionUrl+"/static/unity/Build";
 
         this.config.dataUrl = this.config.buildUrl + "/"+this.config.projectName+".data"+(is_development?"":".gz");
         this.config.frameworkUrl = this.config.buildUrl + "/"+this.config.projectName+".framework.js"+(is_development?"":".gz");
         this.config.codeUrl = this.config.buildUrl + "/"+this.config.projectName+".wasm"+(is_development?"":".gz");
-        this.config.streamingAssetsUrl = this.config.executionUrl.origin + "/StreamingAssets";
+        this.config.streamingAssetsUrl = this.config.buildUrl + "/StreamingAssets";
         this.config.loaderUrl = this.config.buildUrl + "/"+this.config.projectName+".loader.js";
 
         //Main container for overlay
@@ -33,9 +34,9 @@ export class UnityCanvas {
         this.unityCanvas.id = `${containerId}-UnityCanvas`;
         this.unityCanvas.style.width = "100%";
         this.unityCanvas.style.height = "100%";
-        this.unityCanvas.style.position = "absolute";
-        this.unityCanvas.style.top = "0";
-        this.unityCanvas.style.left = "0";
+        //this.unityCanvas.style.position = "absolute";
+        //this.unityCanvas.style.top = "0";
+        //this.unityCanvas.style.left = "0";
         this.unityCanvas.style.opacity = "0";
         this.parentElement.appendChild(this.unityCanvas);
 
