@@ -1,10 +1,13 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import json5
 from my_libs.common.firestore_document import FireStoreDocument
 from firebase_admin import firestore
 from my_libs.the_book.user import User
 from my_libs.common.logger import Log
 from my_libs.common.generator import Generator
+
+import numpy as np
+from scipy.spatial.distance import cosine
 
 class Persona(FireStoreDocument, Generator):
 
@@ -68,7 +71,11 @@ class Persona(FireStoreDocument, Generator):
         psychological_profile = user_interaction['psychological_profile']['profile']
 
         memory_episodes_ref = user_ref.collection('memory_episodes')
-        previous_summaries = [episode.get().to_dict()['episode_summary'] for episode in memory_episodes_ref.stream()]
+        previous_summaries = []
+        for episode in memory_episodes_ref.stream():
+            Log.info(f'Episode: {episode.to_dict()}')
+            previous_summaries.append(episode.to_dict()['episode_summary'])
+        #previous_summaries = [episode.get().to_dict()['episode_summary'] for episode in memory_episodes_ref.stream()]
 
         pre_prompt_content = f"Recall your previous interactions with the user and their psychological profile: {psychological_profile}."
         for idx, summary in enumerate(previous_summaries, start=1):
@@ -98,21 +105,42 @@ class Persona(FireStoreDocument, Generator):
             })
 
         # Check if there is an ongoing episode for today
-        today = datetime.now().date().isoformat()
+        today = datetime.now().date()
         memory_episodes_ref = user_ref.collection('memory_episodes')
-        current_episode_ref = memory_episodes_ref.document(today)
-        
-        if not current_episode_ref.get().exists:
-            Log.info(f'Creating a new episode for user {user_id} on {today}')
-            current_episode_ref.set({
-                'episode_name': f'Episode on {today}',
-                'date': today,
-                "episode_summary": "To be determined.",
-                'messages': [
-                    Persona.get_pre_prompt_for_all_episodes(),
-                    self.get_pre_prompt_for_new_episode(user_id)
-                ]
-            })
+
+        # Filter episodes that contain today's date
+        episodes_today = memory_episodes_ref.where('date', '>=', today.isoformat()).stream()
+
+        # Find the most recent episode of today
+        current_episode_ref = None
+        current_episode = None
+        for episode in episodes_today:
+            episode_data = episode.to_dict()
+            episode_date = datetime.fromisoformat(episode_data['date'])
+            if episode_date.date() == today:
+                if current_episode_ref is None or episode_date > datetime.fromisoformat(current_episode['date']):
+                    current_episode_ref = memory_episodes_ref.document(episode.id)
+                    current_episode = episode_data
+
+        # Check if the time difference between the last message in the current episode and the new message is more than 1 hour
+        if current_episode_ref.get().exists:
+            current_episode = current_episode_ref.get().to_dict()
+            last_message_time = datetime.fromisoformat(current_episode['messages'][-1]['time'])
+            time_difference = datetime.now() - last_message_time
+
+            if time_difference > timedelta(hours=1):
+                # If the time difference is more than 1 hour, create a new episode
+                current_episode_ref = memory_episodes_ref.document(datetime.now().isoformat())
+                current_episode_ref.set({
+                    'episode_name': f'Episode on {datetime.now().isoformat()}',
+                    'date': datetime.now().isoformat(),
+                    "episode_summary": "To be determined.",
+                    'messages': [
+                        Persona.get_pre_prompt_for_all_episodes(),
+                        self.get_pre_prompt_for_new_episode(user_id)
+                    ]
+                })
+
 
         # Add the message to the episode
         current_episode = current_episode_ref.get().to_dict()
@@ -178,27 +206,24 @@ class Persona(FireStoreDocument, Generator):
         Log.info(f'Updated psychological profile for user {user_id}')
         return new_profile
     
-    def update_episode_summary(self, user_id, episode_date):
+    def update_episode_summary(self, user_id, episode):
         '''
             Update the summary of the specified episode for the user
         '''
-        user_ref = self.doc_ref.collection('user_interaction').document(user_id)
-        if not user_ref.get().exists:
-            Log.error(f'User interaction for user {user_id} not found')
+
+        if not episode.exists:
+            Log.error(f'Episode {episode} for user {user_id} not found')
             return
 
-        memory_episodes_ref = user_ref.collection('memory_episodes')
-        episode_ref = memory_episodes_ref.document(episode_date)
-
-        if not episode_ref.get().exists:
-            Log.error(f'Episode for user {user_id} on {episode_date} not found')
-            return
-
-        episode = episode_ref.get().to_dict()
-        messages = [{'role': m['role'], 'content': m['content']} for m in episode['messages']]
+        episode_dict = episode.to_dict()
+        messages = [{'role': m['role'], 'content': m['content']} for m in episode_dict['messages']]
 
         # Generate an episode summary using the ask_large_language_model method
-        prompt = f"Please provide a brief summary of the following conversation:"
+        prompt = f"""You are creating a summary for the purpose of compressing a conversation and storing it as a memory.
+        You should make sure to include any important information that was discussed in the conversation, as if you were trying to remember it later.
+        Use the name of the user if you know it.
+        Try to keep the summary under 250 words.
+        Here is the conversation:"""
         for message in messages:
             prompt += f"\n\n{message['role'].capitalize()}: {message['content']}"
         prompt += "\n\nSummary:"
@@ -206,12 +231,14 @@ class Persona(FireStoreDocument, Generator):
         (new_summary, _token_count) = self.ask_large_language_model([{"role":"system", "content":prompt}])
 
         # Update the episode's summary
-        episode['episode_summary'] = new_summary
-        episode_ref.update(episode)
+        episode_dict['episode_summary'] = new_summary
+        episode_dict['episode_summary_embeddings'] = self.generateTextEmbeddings(new_summary)
 
-        Log.info(f'Updated episode summary for user {user_id} on {episode_date}')
+        episode.reference.update(episode_dict)
+
+        Log.info(f'Updated episode summary for user {user_id}')
         return new_summary
-    
+
     def update_latest_episode_summary(self, user_id):
         user_ref = self.doc_ref.collection('user_interaction').document(user_id)
         episode_ref = user_ref.collection('memory_episodes')
@@ -227,7 +254,7 @@ class Persona(FireStoreDocument, Generator):
         episode_date = latest_episode_document.get("date")
         
         # Update the episode summary
-        return self.update_episode_summary(user_id, episode_date)
+        return self.update_episode_summary(user_id, latest_episode_document)
     
     def get_all_episodes(self, user_id):
         user_ref = self.doc_ref.collection('user_interaction').document(user_id)
@@ -240,3 +267,39 @@ class Persona(FireStoreDocument, Generator):
         sorted_episodes = sorted(episodes, key=lambda x: x['date'], reverse=True)
 
         return sorted_episodes
+    
+    def recompute_missing_summaries_for_all_episodes(self, user_id):
+        user_ref = self.doc_ref.collection('user_interaction').document(user_id)
+        memory_episodes_ref = user_ref.collection('memory_episodes')
+        partial_episodes = memory_episodes_ref.where('episode_summary', '==', "To be determined.").stream()
+
+        # Update the episode embeddings
+        cnt = 0
+        for episode in partial_episodes:
+            Log.info(f'Updating episode embeddings for user {user_id} episode {episode.id}')
+            self.update_episode_summary(user_id, episode)
+            cnt += 1
+
+        return f'Updated {cnt} episode embeddings for user {user_id}'
+
+    def find_most_relevant_episodes(self, user_id, input_text, top_n=3):
+        # Generate the input text embedding
+        input_text_embedding = self.generateTextEmbeddings(input_text)
+
+        # Fetch all episodes for the given user_id
+        all_episodes = self.get_all_episodes(user_id)
+
+        # Calculate the cosine similarity between the input text embedding and the episode summary embeddings
+        similarity_scores = []
+        for episode in all_episodes:
+            if 'episode_summary_embeddings' not in episode:
+                continue
+            episode_summary_embedding = episode['episode_summary_embeddings']
+            similarity = 1 - cosine(input_text_embedding, episode_summary_embedding)
+            similarity_scores.append((episode, similarity))
+
+        # Sort the episodes based on the similarity scores in descending order
+        sorted_episodes = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
+
+        # Return the top N most relevant episodes
+        return [episode for episode, _ in sorted_episodes[:top_n]]

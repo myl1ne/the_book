@@ -40,6 +40,10 @@ class Generator:
         Log.debug(f"Answer is: {chat_completion.choices[0].message.content}")
         return (chat_completion.choices[0].message.content, chat_completion.usage["total_tokens"])
 
+    def generateTextEmbeddings(self, text:str, model="text-embedding-ada-002"):
+        text = text.replace("\n", " ")
+        return openai.Embedding.create(input = [text], model=model)['data'][0]['embedding']
+
     def generate2D(self, prompt: str, size_override = None, additional_suffixes = []) -> str:
         Log.debug("generate2D: " + str(prompt))
         response = openai.Image.create(
