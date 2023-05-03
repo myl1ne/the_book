@@ -8,9 +8,8 @@
 
 {% block content %}
 <main id="content-main">
-    <h1>{{ persona_id }}</h1>
-    
     <div id = "interaction-container">
+        <h1>{{ persona_id }}</h1>
         <div id = "persona-container">
             <div class="chat-window custom-scrollbar" id="chat-window">
                 <!-- Messages will be added dynamically 
@@ -27,12 +26,16 @@
             <div id="controller-buttons">
                 <button type="button" class="toggle-media-button" id="camera-toggle">
                     <i class="fas fa-video"></i>
-                  </button>
-                  <button type="button" class="toggle-media-button" id="microphone-toggle">
+                </button>
+                <button type="button" class="toggle-media-button" id="microphone-toggle">
                     <i class="fas fa-microphone"></i>
-                  </button>
+                </button>
             </div>
         </form>
+    </div>
+    
+    <div id="relevant-memories-panel" class="custom-scrollbar">
+        <!-- Relevant memories will be added dynamically -->
     </div>
 </main>
 

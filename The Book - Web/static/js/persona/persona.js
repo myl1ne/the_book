@@ -47,6 +47,7 @@ function handleUserInput(text) {
             const data = await response.json();
             addMessageToChat("persona", data);
             agent.say(data);
+            fetchAndDisplayRelevantEpisodes(text);
         } else {
             addMessageToChat("system", "Error: Could not get reply from Persona");
         }
@@ -61,6 +62,28 @@ function addMessageToChat(role, content) {
     chatWindow.appendChild(messageDiv);
     chatWindow.scrollTop = chatWindow.scrollHeight; // Scroll to the bottom
 }
+
+async function fetchAndDisplayRelevantEpisodes(text) {
+    // Fetch the most relevant episodes
+    const url = `/persona/${persona}/relevant_episodes`;
+    const response = await post_to_authenticated_route(url, { text: text });
+
+    if (response.ok) {
+        const episodes = await response.json();
+        const panel = document.getElementById("relevant-memories-panel");
+        panel.innerHTML = ""; // Clear previous memories
+
+        for (const episode of episodes) {
+            const episodeDiv = document.createElement("div");
+            episodeDiv.classList.add("episode-summary");
+            episodeDiv.innerHTML = `<p>${episode.episode_summary}</p>`;
+            panel.appendChild(episodeDiv);
+        }
+    } else {
+        console.error("Error fetching relevant episodes");
+    }
+}
+
 /*
 function createEpisodeElement(date, summary, messages) {
     const episodeDiv = document.createElement("div");
