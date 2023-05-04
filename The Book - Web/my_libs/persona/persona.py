@@ -12,6 +12,7 @@ from scipy.spatial.distance import cosine
 class Persona(FireStoreDocument, Generator):
 
     def __init__(self, id = None):
+        self.name = id
         FireStoreDocument.__init__(self, 'persona', id)
         Generator.__init__(self)
 
@@ -45,20 +46,19 @@ class Persona(FireStoreDocument, Generator):
                 }
             }
         }
-
+    
     @staticmethod
-    def get_pre_prompt_for_all_episodes():
+    def get_pre_prompt_for_all_episodes(name:str):
         return {
             "role": "system",
-            "content": """
-                You are a digital persona.
-                You are interacting with a user.
+            "content": f"""
+                You are a digital persona called {name}.
+                You are interacting with a single user, try to use his name instead of "user".
                 Your role is twofold:
                 1) understand the user through conversation.
                 2) grow your own sense of self, and personality through conversation.
                 You should use the opportunity of this conversation to learn about the user, and to learn about yourself.
                 """,
-            "time": datetime.now().isoformat()
         }
     
     def get_pre_prompt_for_new_episode(self, user_id):
@@ -67,28 +67,73 @@ class Persona(FireStoreDocument, Generator):
             Log.error(f'User interaction for user {user_id} not found')
             return {}
 
-        user_interaction = user_ref.get().to_dict()
-        psychological_profile = user_interaction['psychological_profile']['profile']
-
         memory_episodes_ref = user_ref.collection('memory_episodes')
-        previous_summaries = []
+        previous_summaries = ""
         for episode in memory_episodes_ref.stream():
-            Log.info(f'Episode: {episode.to_dict()}')
-            previous_summaries.append(episode.to_dict()['episode_summary'])
-        #previous_summaries = [episode.get().to_dict()['episode_summary'] for episode in memory_episodes_ref.stream()]
+            episode_dict = episode.to_dict()
+            previous_summaries += f"\tdate: {episode_dict['date']},\n\tsummary: {episode_dict['episode_summary']}\n\n"
 
-        pre_prompt_content = f"Recall your previous interactions with the user and their psychological profile: {psychological_profile}."
-        for idx, summary in enumerate(previous_summaries, start=1):
-            pre_prompt_content += f"\n\nEpisode {idx} summary: {summary}"
-        pre_prompt_content += "\n\nIn this new interaction, continue to learn about the user and develop your own sense of self."
+        latest_episode = self.get_latest_episode(user_id)
+        latest_episode_summary = "No interaction yet."
+        if (latest_episode is not None):
+            latest_episode_summary = latest_episode.get("episode_summary")
+        pre_prompt_content = f"""Here is the summary of your lifetime interaction with the user:
+        {self.compute_overall_summary(user_id)}
 
+        Here is the detailed summary of your last interaction:
+        {latest_episode_summary}
+        
+        Your interaction in this new episode starts now (date is {datetime.now().isoformat()}).
+        """
         return {
             "role": "system",
             "content": pre_prompt_content,
-            "time": datetime.now().isoformat()
         }
 
-    def read_and_reply(self, user_id, message):
+    def compute_overall_summary(self, user_id):
+        user_ref = self.doc_ref.collection('user_interaction').document(user_id)
+        if not user_ref.get().exists:
+            Log.error(f'User interaction for user {user_id} not found')
+            return {}
+
+        memory_episodes_ref = user_ref.collection('memory_episodes')
+        previous_summaries = ""
+        for episode in memory_episodes_ref.stream():
+            episode_dict = episode.to_dict()
+            previous_summaries += f"\tdate: {episode_dict['date']},\n\tsummary: {episode_dict['episode_summary']}\n\n"
+
+        prompt_content = f"""Here are the summaries of your lifetime episodes with the user.
+        Your current task is to generate an overall summary of those so you have context for the new interaction.
+        {previous_summaries}
+
+        In case you need it, today's date is {datetime.now().isoformat()}.
+        Please write the overall summary now.
+        Use the user's name instead of "user" and use "I" instead of your name.
+        Keep it under 250 words.
+        """
+        messages = [
+            Persona.get_pre_prompt_for_all_episodes(self.name),
+            {'role':'system', 'content':prompt_content}
+        ]
+        (answer, _token_count) = self.ask_large_language_model(messages)
+        return answer
+
+    def add_new_episode(self, user_id):
+        user_ref = self.doc_ref.collection('user_interaction').document(user_id)
+        memory_episodes_ref = user_ref.collection('memory_episodes')
+        current_episode_ref = memory_episodes_ref.document(datetime.now().isoformat())
+        current_episode_ref.set({
+            'episode_name': f'Episode on {datetime.now().isoformat()}',
+            'date': datetime.now().isoformat(),
+            "episode_summary": "To be determined.",
+            'messages': [
+                Persona.get_pre_prompt_for_all_episodes(self.name),
+                self.get_pre_prompt_for_new_episode(user_id)
+            ]
+        })
+        return current_episode_ref
+
+    def read_and_reply(self, user_id, message, force_new_episode=False):
         '''read the message and reply to it
         return the reply
         update the user_interaction dictionary
@@ -128,19 +173,10 @@ class Persona(FireStoreDocument, Generator):
             last_message_time = datetime.fromisoformat(current_episode['messages'][-1]['time'])
             time_difference = datetime.now() - last_message_time
 
-            if time_difference > timedelta(hours=1):
+            if force_new_episode or time_difference > timedelta(hours=1):
+                Log.info(f'Creating new episode for user {user_id}')
                 # If the time difference is more than 1 hour, create a new episode
-                current_episode_ref = memory_episodes_ref.document(datetime.now().isoformat())
-                current_episode_ref.set({
-                    'episode_name': f'Episode on {datetime.now().isoformat()}',
-                    'date': datetime.now().isoformat(),
-                    "episode_summary": "To be determined.",
-                    'messages': [
-                        Persona.get_pre_prompt_for_all_episodes(),
-                        self.get_pre_prompt_for_new_episode(user_id)
-                    ]
-                })
-
+                current_episode_ref = self.add_new_episode(user_id)
 
         # Add the message to the episode
         current_episode = current_episode_ref.get().to_dict()
@@ -221,14 +257,18 @@ class Persona(FireStoreDocument, Generator):
         # Generate an episode summary using the ask_large_language_model method
         prompt = f"""You are creating a summary for the purpose of compressing a conversation and storing it as a memory.
         You should make sure to include any important information that was discussed in the conversation, as if you were trying to remember it later.
-        Use the name of the user if you know it.
+        Use the name of the user if you know it. 
+        Write the summary to the first person (e.g. use "I" or "myself, <your name>"), so that the summary helps growing your sense of self.
         Try to keep the summary under 250 words.
         Here is the conversation:"""
         for message in messages:
             prompt += f"\n\n{message['role'].capitalize()}: {message['content']}"
         prompt += "\n\nSummary:"
 
-        (new_summary, _token_count) = self.ask_large_language_model([{"role":"system", "content":prompt}])
+        (new_summary, _token_count) = self.ask_large_language_model([
+            Persona.get_pre_prompt_for_all_episodes(self.name),
+            {"role":"system", "content":prompt}
+        ])
 
         # Update the episode's summary
         episode_dict['episode_summary'] = new_summary
@@ -239,7 +279,7 @@ class Persona(FireStoreDocument, Generator):
         Log.info(f'Updated episode summary for user {user_id}')
         return new_summary
 
-    def update_latest_episode_summary(self, user_id):
+    def get_latest_episode(self, user_id):
         user_ref = self.doc_ref.collection('user_interaction').document(user_id)
         episode_ref = user_ref.collection('memory_episodes')
         
@@ -247,13 +287,13 @@ class Persona(FireStoreDocument, Generator):
         latest_episode = episode_ref.order_by('date', direction=firestore.Query.DESCENDING).limit(1).get()
         
         if not latest_episode:
-            print("No episodes found for user", user_id)
-            return
+            Log.error(f"No episodes found for user {user_id}")
+            return None
         
-        latest_episode_document = latest_episode[0]  # Corrected line
-        episode_date = latest_episode_document.get("date")
-        
-        # Update the episode summary
+        return latest_episode[0]
+
+    def update_latest_episode_summary(self, user_id):
+        latest_episode_document = self.get_latest_episode(user_id = user_id)
         return self.update_episode_summary(user_id, latest_episode_document)
     
     def get_all_episodes(self, user_id):
@@ -302,4 +342,7 @@ class Persona(FireStoreDocument, Generator):
         sorted_episodes = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
 
         # Return the top N most relevant episodes
+        for episode, similarity in sorted_episodes[:top_n]:
+            Log.info(f'Episode {episode["date"]} with similarity score {similarity}')
+            episode['similarity_score'] = similarity
         return [episode for episode, _ in sorted_episodes[:top_n]]

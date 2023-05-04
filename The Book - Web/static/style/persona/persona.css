@@ -151,3 +151,55 @@
     padding: 10px;
     background-color: rgba(50, 50, 50, 0.5);
 }
+
+/* Container for each episode */
+.episode {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 5px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Similarity score container */
+  .episode-similarity {
+    margin-bottom: 5px;
+  }
+  
+  /* Progress bar for similarity score */
+.progress-bar {
+    background-color: #000000;
+    height: 10px;
+    padding: 2px;
+    width: 100%;
+    border-radius: 5px;
+    border-color: #4CAF50;
+    position: relative;
+    text-align: center;
+  }
+.progress-bar-filling {
+    background-color: #4CAF50;
+    height: 100%;
+    width: 0;
+    border-radius: 5px;
+  }
+
+.progress-bar-score {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    width: 100%;
+  }
+
+  /* Episode date container */
+  .episode-date {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  /* Episode summary container */
+  .episode-summary {
+    margin-bottom: 5px;
+  }

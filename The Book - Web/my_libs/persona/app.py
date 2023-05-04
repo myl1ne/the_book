@@ -38,7 +38,8 @@ def initialize(app):
             reply = persona.recompute_missing_summaries_for_all_episodes(user_id = user_id)
             return jsonify(reply)
         
-        reply = persona.read_and_reply(user_id = user_id, message = text)
+        force_new_episode = "@new_episode" in text
+        reply = persona.read_and_reply(user_id = user_id, message = text, force_new_episode=force_new_episode)  
         return jsonify(reply)
 
     @app.route("/persona/<persona_id>/episodes", methods=["POST"])

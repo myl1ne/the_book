@@ -75,8 +75,32 @@ async function fetchAndDisplayRelevantEpisodes(text) {
 
         for (const episode of episodes) {
             const episodeDiv = document.createElement("div");
-            episodeDiv.classList.add("episode-summary");
-            episodeDiv.innerHTML = `<p>${episode.episode_summary}</p>`;
+            episodeDiv.classList.add("episode");
+            
+            const progressBar = document.createElement("div");
+            progressBar.classList.add("progress-bar");
+            episodeDiv.appendChild(progressBar);
+            
+            const progressBarFilling = document.createElement("div");
+            progressBarFilling.classList.add("progress-bar-filling");
+            progressBarFilling.style.width = `${episode.similarity_score * 100}%`;
+            progressBar.appendChild(progressBarFilling);
+            
+            const progressBarScore = document.createElement("div");
+            progressBarScore.classList.add("progress-bar-score");
+            progressBarScore.innerHTML = `${episode.similarity_score * 100}%`;
+            progressBar.appendChild(progressBarScore);
+            
+            const dateDiv = document.createElement("div");
+            dateDiv.classList.add("episode-date");
+            dateDiv.innerHTML = `<p>${episode.date}</p>`;
+            episodeDiv.appendChild(dateDiv);
+            
+            const summaryDiv = document.createElement("div");
+            summaryDiv.classList.add("episode-summary");
+            summaryDiv.innerHTML = `<p>${episode.episode_summary}</p>`;
+            episodeDiv.appendChild(summaryDiv);
+            
             panel.appendChild(episodeDiv);
         }
     } else {

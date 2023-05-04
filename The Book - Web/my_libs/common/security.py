@@ -32,6 +32,7 @@ def firebase_auth_checked(f):
 def firebase_auth_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
+        from time import sleep
         id_token = None
         if request.method == "POST" and request.json:
             id_token = request.json.get("idToken")
@@ -45,9 +46,24 @@ def firebase_auth_required(f):
         try:
             decoded_token = auth.verify_id_token(id_token,check_revoked=False)
             request.user = decoded_token
-        except Exception as e:
-            Log.error(f"Error while verifying ID token: {str(e)}")
-            return jsonify({"error": str(e)}), 400
+        except Exception as err:
+            # this happens on localhost all the time.
+            str_err = str(err)
+            if (str_err.find("Token used too early") > -1):
+                #times = str_err.split(",")[1].split("<")
+                #time = int(times[1]) - int(times[0])
+                wait_time = 1
+                Log.error(f"Error while verifying ID token: token too early. Retrying in {wait_time} seconds.")
+                sleep(wait_time)
+                try:
+                    decoded_token = auth.verify_id_token(id_token,check_revoked=False)
+                    request.user = decoded_token
+                except Exception as err:
+                    Log.error(f"Error while verifying too early token: {str(err)}")
+                    return jsonify({"error": str(err)}), 400
+            else:
+                Log.error(f"Error while verifying ID token: {str(err)}")
+                return jsonify({"error": str(err)}), 400
         return f(*args, **kwargs)
     return wrapper
 
