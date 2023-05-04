@@ -2,7 +2,7 @@ import { post_to_authenticated_route } from "../common/firebase.js";
 import { Agent } from "../common/conversational_agent.js";
 
 const form = document.getElementById("message-form");
-const messageInput = document.getElementById("message");
+const messageInput = document.getElementById("message-input");
 const chatWindow = document.getElementById("chat-window");
 const btnToggleMicrophone = document.getElementById("microphone-toggle");
 const btnToggleCamera = document.getElementById("camera-toggle");

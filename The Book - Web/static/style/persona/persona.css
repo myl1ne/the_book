@@ -108,6 +108,20 @@
     color: #777;
 }
 
+.message-input {
+    width: 50%;
+    margin: 10px;
+    font-size: 18px;
+    color: rgb(0, 255, 60);
+    border-color: aqua;
+    transition: box-shadow 0.3s ease;
+}
+
+.message-input:focus {
+    outline: none;
+    box-shadow: 0 0 5px aqua;
+}
+
 .episodes-list {
     display: flex;
     flex-direction: column;
