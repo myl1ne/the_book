@@ -123,6 +123,7 @@ public class GazeController : SerializedMonoBehaviour
     [FoldoutGroup("Attention")]
     [SerializeField]
     private Transform m_target;
+    public Transform GetTarget() { return m_target; }
 
     public void LockTarget(Transform target)
     {

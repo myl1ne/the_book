@@ -1828,7 +1828,7 @@ MonoBehaviour:
   randomHoldDurationMax: 0.5
   configReady: 0
   warnOnNullRefs: 1
-  inspSalsaLinked: 1
+  inspSalsaLinked: 0
   inspStateFoldoutProcessing: 1
   inspStateFoldoutSettings: 1
   inspStateFoldoutEmotes: 1
@@ -1904,7 +1904,6 @@ GameObject:
   - component: {fileID: 4811491655669371559}
   - component: {fileID: 4811491655669371552}
   - component: {fileID: 4811491655669371553}
-  - component: {fileID: 5621816124734769278}
   m_Layer: 0
   m_Name: EyesMouthAnimator
   m_TagString: Untagged
@@ -1912,88 +1911,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &5621816124734769278
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5621816124734769277}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5e22aaeb5943ecc458732f9070a9e0a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  serializationData:
-    SerializedFormat: 2
-    SerializedBytes: 
-    ReferencedUnityObjects: []
-    SerializedBytesString: 
-    Prefab: {fileID: 0}
-    PrefabModificationsReferencedUnityObjects: []
-    PrefabModifications: []
-    SerializationNodes: []
-  m_spineChain:
-  - m_transform: {fileID: 195139251}
-    m_rotationSpeed: 10
-    m_rotationOffset: {x: 180, y: 90, z: 20}
-  - m_transform: {fileID: 19000183}
-    m_rotationSpeed: 0
-    m_rotationOffset: {x: 180, y: 90, z: 0}
-  - m_transform: {fileID: 372132153}
-    m_rotationSpeed: 0
-    m_rotationOffset: {x: 180, y: 90, z: 0}
-  m_eyes:
-  - m_eyeball:
-      m_transform: {fileID: 1539135353}
-      m_rotationSpeed: 50
-      m_rotationOffset: {x: 180, y: 90, z: -10}
-    m_pupil: {fileID: 0}
-    m_eyelids:
-    - {fileID: 1649985869}
-    - {fileID: 110023497}
-    m_eyeLidOpened:
-      m_positionConfigurations:
-      - {x: -0.1608506, y: -0.020848006, z: 0.18594961}
-      - {x: -0.16077152, y: -0.020787215, z: 0.18595408}
-      m_rotationConfigurations:
-      - {x: 0.7328494, y: 0.01923639, z: -0.048791368, w: 0.6783666}
-      - {x: 0.5817868, y: -0.3614607, z: -0.44830003, w: 0.57436705}
-    m_eyeLidClosed:
-      m_positionConfigurations:
-      - {x: -0.16081691, y: -0.02081436, z: 0.18594973}
-      - {x: -0.1607922, y: -0.020826707, z: 0.18595164}
-      m_rotationConfigurations:
-      - {x: 0.6866785, y: -0.17964716, z: -0.26061705, w: 0.65442973}
-      - {x: 0.67962354, y: -0.19671066, z: -0.27849698, w: 0.64950466}
-  - m_eyeball:
-      m_transform: {fileID: 810855872}
-      m_rotationSpeed: 50
-      m_rotationOffset: {x: 180, y: 90, z: -10}
-    m_pupil: {fileID: 0}
-    m_eyelids:
-    - {fileID: 830819988}
-    - {fileID: 321043911}
-    m_eyeLidOpened:
-      m_positionConfigurations:
-      - {x: -0.16081324, y: -0.020879775, z: -0.18594655}
-      - {x: -0.16070716, y: -0.020761222, z: -0.18594866}
-      m_rotationConfigurations:
-      - {x: -0.73318255, y: -0.024133882, z: -0.04349881, w: 0.67820996}
-      - {x: -0.5571213, y: 0.3914957, z: -0.47860715, w: 0.55433047}
-    m_eyeLidClosed:
-      m_positionConfigurations:
-      - {x: -0.16084495, y: -0.020886771, z: -0.18594655}
-      - {x: -0.1607212, y: -0.020783894, z: -0.18594866}
-      m_rotationConfigurations:
-      - {x: -0.6926436, y: 0.16413763, z: -0.24432342, w: 0.65849066}
-      - {x: -0.69709104, y: 0.15179524, z: -0.2313288, w: 0.6614449}
-  m_microsaccadeIntervalMin: 0.1
-  m_microsaccadeIntervalMax: 2
-  m_microsaccadeSphereRadius: 0.5
-  m_blinkIntervalMin: 2
-  m_blinkIntervalMax: 10
-  m_target: {fileID: 1124787383}
 --- !u!65 &6899112354653541963
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2268,6 +2185,8 @@ GameObject:
   - component: {fileID: 6899112354781864724}
   - component: {fileID: 7242036721394809726}
   - component: {fileID: 7242036721394809725}
+  - component: {fileID: 7242036721394809728}
+  - component: {fileID: 7242036721394809727}
   m_Layer: 0
   m_Name: Fox
   m_TagString: Untagged
@@ -2315,3 +2234,101 @@ MonoBehaviour:
   m_walkDistanceLowerRange: 10
   m_runDistanceLowerRange: 30
   m_animator: {fileID: 4811491656063530273}
+--- !u!114 &7242036721394809727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7242036721394809724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c033881cc380c5040a28c3c87eca9d31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_gaze: {fileID: 7242036721394809728}
+  m_attentionRadius: 100
+  m_saliencyBaseSpeed: 0.05
+  m_attentionSwitchCooldown: 2.5
+--- !u!114 &7242036721394809728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7242036721394809724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e22aaeb5943ecc458732f9070a9e0a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  m_spineChain:
+  - m_transform: {fileID: 195139251}
+    m_rotationSpeed: 10
+    m_rotationOffset: {x: 180, y: 90, z: 20}
+  - m_transform: {fileID: 19000183}
+    m_rotationSpeed: 0
+    m_rotationOffset: {x: 180, y: 90, z: 0}
+  - m_transform: {fileID: 372132153}
+    m_rotationSpeed: 0
+    m_rotationOffset: {x: 180, y: 90, z: 0}
+  m_eyes:
+  - m_eyeball:
+      m_transform: {fileID: 1539135353}
+      m_rotationSpeed: 50
+      m_rotationOffset: {x: 180, y: 90, z: -10}
+    m_pupil: {fileID: 0}
+    m_eyelids:
+    - {fileID: 1649985869}
+    - {fileID: 110023497}
+    m_eyeLidOpened:
+      m_positionConfigurations:
+      - {x: -0.1608506, y: -0.020848006, z: 0.18594961}
+      - {x: -0.16077152, y: -0.020787215, z: 0.18595408}
+      m_rotationConfigurations:
+      - {x: 0.7328494, y: 0.01923639, z: -0.048791368, w: 0.6783666}
+      - {x: 0.5817868, y: -0.3614607, z: -0.44830003, w: 0.57436705}
+    m_eyeLidClosed:
+      m_positionConfigurations:
+      - {x: -0.16081691, y: -0.02081436, z: 0.18594973}
+      - {x: -0.1607922, y: -0.020826707, z: 0.18595164}
+      m_rotationConfigurations:
+      - {x: 0.6866785, y: -0.17964716, z: -0.26061705, w: 0.65442973}
+      - {x: 0.67962354, y: -0.19671066, z: -0.27849698, w: 0.64950466}
+  - m_eyeball:
+      m_transform: {fileID: 810855872}
+      m_rotationSpeed: 50
+      m_rotationOffset: {x: 180, y: 90, z: -10}
+    m_pupil: {fileID: 0}
+    m_eyelids:
+    - {fileID: 830819988}
+    - {fileID: 321043911}
+    m_eyeLidOpened:
+      m_positionConfigurations:
+      - {x: -0.16081324, y: -0.020879775, z: -0.18594655}
+      - {x: -0.16070716, y: -0.020761222, z: -0.18594866}
+      m_rotationConfigurations:
+      - {x: -0.73318255, y: -0.024133882, z: -0.04349881, w: 0.67820996}
+      - {x: -0.5571213, y: 0.3914957, z: -0.47860715, w: 0.55433047}
+    m_eyeLidClosed:
+      m_positionConfigurations:
+      - {x: -0.16084495, y: -0.020886771, z: -0.18594655}
+      - {x: -0.1607212, y: -0.020783894, z: -0.18594866}
+      m_rotationConfigurations:
+      - {x: -0.6926436, y: 0.16413763, z: -0.24432342, w: 0.65849066}
+      - {x: -0.69709104, y: 0.15179524, z: -0.2313288, w: 0.6614449}
+  m_microsaccadeIntervalMin: 0.1
+  m_microsaccadeIntervalMax: 2
+  m_microsaccadeSphereRadius: 0.5
+  m_blinkIntervalMin: 2
+  m_blinkIntervalMax: 10
+  m_target: {fileID: 1124787383}

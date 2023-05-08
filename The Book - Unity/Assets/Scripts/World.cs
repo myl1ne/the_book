@@ -1,6 +1,8 @@
 using Sirenix.OdinInspector;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -118,5 +120,17 @@ public class World : SerializedMonoBehaviour
             return null;
         }
         return m_entities[name];
+    }
+
+    public ICollection<Entity> GetEntities()
+    {
+        return m_entities.Values;
+    }
+
+    public IOrderedEnumerable<(Entity, float)> GetEntitiesByDistance(Transform center, float cutoff)
+    {
+        return from pair in (
+                from e in m_entities.Values select (e, Vector3.Distance(center.position, e.transform.position))
+            ) where pair.Item2 <= cutoff orderby pair.Item2 ascending select pair;
     }
 }
